@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Lock — Account Recovery</title>
+  <link rel="stylesheet" href="recovery.css">
+</head>
+<body>
+  <div class="recovery-container">
+    <!-- Ambient glow -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="recovery-card">
+      <!-- Shield Key SVG icon -->
+      <div class="recovery-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="56" height="56">
+          <defs>
+            <linearGradient id="recGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+          </defs>
+          <path d="M32 4L8 16v16c0 14.4 10.24 27.84 24 32 13.76-4.16 24-17.6 24-32V16L32 4z"
+                fill="url(#recGrad)" opacity="0.9"/>
+          <!-- Key icon in center -->
+          <circle cx="28" cy="30" r="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+          <path d="M32.5 34.5L42 44M39 41l2 2M41 39l2 2" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h1 class="recovery-title" id="view-title">Account Recovery</h1>
+      <p class="recovery-subtitle" id="view-subtitle">Select a recovery method to reset your Browser Lock PIN</p>
+
+      <!-- View 1: Recovery Method Selection -->
+      <div id="methods-view" class="view-section active">
+        <!-- Option A: Windows Security -->
+        <div class="recovery-option" id="opt-windows">
+          <div class="option-header">
+            <div class="option-icon-box">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="option-text">
+              <div class="option-title">Windows Security</div>
+              <div class="option-desc">Verify using your Windows PIN or Password</div>
+            </div>
+          </div>
+          <button id="windows-verify-btn" class="primary-btn option-action-btn" type="button">
+            <span class="btn-text">Verify with Windows</span>
+            <span class="btn-spinner" id="win-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="divider">
+          <span>OR</span>
+        </div>
+
+        <!-- Option B: Authenticator App (TOTP) -->
+        <div class="recovery-option" id="opt-totp">
+          <div class="option-header">
+            <div class="option-icon-box">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="option-text">
+              <div class="option-title">Authenticator App (TOTP)</div>
+              <div class="option-desc">Enter 6-digit code from Google Authenticator</div>
+            </div>
+          </div>
+
+          <div class="totp-input-wrap">
+            <input
+              type="text"
+              id="totp-input"
+              class="totp-input"
+              maxlength="6"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              spellcheck="false"
+              placeholder="000000"
+              aria-label="6-digit Authenticator code"
+            >
+            <button id="totp-verify-btn" class="secondary-btn verify-sub-btn" type="button">
+              <span class="btn-text">Verify Code</span>
+              <span class="btn-spinner" id="totp-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <button id="back-to-lock-btn" class="text-link-btn" type="button">
+          ← Back to PIN Screen
+        </button>
+      </div>
+
+      <!-- View 2: Reset PIN (Visible only after successful verification) -->
+      <div id="reset-pin-view" class="view-section">
+        <div class="success-banner">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>Identity Verified Successfully</span>
+        </div>
+
+        <div class="form-field">
+          <label for="new-pin" class="field-label">Create New PIN (4–16 digits)</label>
+          <input
+            type="password"
+            id="new-pin"
+            class="text-input"
+            maxlength="16"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="••••••"
+            aria-label="New PIN"
+          >
+        </div>
+
+        <div class="form-field">
+          <label for="confirm-pin" class="field-label">Confirm New PIN</label>
+          <input
+            type="password"
+            id="confirm-pin"
+            class="text-input"
+            maxlength="16"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="••••••"
+            aria-label="Confirm New PIN"
+          >
+        </div>
+
+        <button id="save-new-pin-btn" class="primary-btn" type="button">
+          <span class="btn-text">Save New PIN &amp; Unlock</span>
+          <span class="btn-spinner" id="save-spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
+    </div>
+
+    <p class="footer-note">100% Local Verification • Zero External Data Transfer</p>
+  </div>
+
+  <script src="totp.js"></script>
+  <script src="recovery.js"></script>
+</body>
+</html>

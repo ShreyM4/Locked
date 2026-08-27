@@ -162,6 +162,102 @@
     }
   });
 
+  // ---- Test Windows Security Verification ----
+
+  const testWindowsBtn = document.getElementById('test-windows-btn');
+  const testWinMsg     = document.getElementById('test-win-msg');
+
+  testWindowsBtn.addEventListener('click', () => {
+    showFeedback(testWinMsg, 'Launching Windows Security...', '');
+    testWindowsBtn.disabled = true;
+
+    try {
+      chrome.runtime.sendNativeMessage(
+        'com.browserlock.native_helper',
+        { action: 'verify_windows_credentials' },
+        (response) => {
+          testWindowsBtn.disabled = false;
+
+          if (chrome.runtime.lastError) {
+            const err = chrome.runtime.lastError.message;
+            if (err.includes('not found') || err.includes('specified host')) {
+              showFeedback(testWinMsg, 'Native helper not installed. Run install.bat in native-host/ folder.', 'error');
+            } else {
+              showFeedback(testWinMsg, 'Error: ' + err, 'error');
+            }
+            return;
+          }
+
+          if (response && response.success) {
+            showFeedback(testWinMsg, 'Windows Security verification succeeded!', 'success');
+          } else if (response && response.cancelled) {
+            showFeedback(testWinMsg, 'Windows verification cancelled.', 'error');
+          } else {
+            showFeedback(testWinMsg, (response && response.error) || 'Verification failed.', 'error');
+          }
+        }
+      );
+    } catch (err) {
+      testWindowsBtn.disabled = false;
+      showFeedback(testWinMsg, 'Failed: ' + err.message, 'error');
+    }
+  });
+
+  // ---- Authenticator App (TOTP) View / Setup ----
+
+  const toggleTotpBtn    = document.getElementById('toggle-totp-view-btn');
+  const optionsTotpBox   = document.getElementById('options-totp-box');
+  const totpAuthPin      = document.getElementById('totp-auth-pin');
+  const confirmTotpBtn   = document.getElementById('confirm-totp-auth-btn');
+  const totpSecretArea   = document.getElementById('totp-secret-area');
+  const optionsQrBox     = document.getElementById('options-qr-container');
+  const optionsSecretCode= document.getElementById('options-secret-code');
+  const totpOptionsMsg   = document.getElementById('totp-options-msg');
+
+  toggleTotpBtn.addEventListener('click', () => {
+    if (optionsTotpBox.style.display === 'none') {
+      optionsTotpBox.style.display = 'block';
+      totpAuthPin.value = '';
+      totpAuthPin.focus();
+    } else {
+      optionsTotpBox.style.display = 'none';
+      totpSecretArea.style.display = 'none';
+      showFeedback(totpOptionsMsg, '', '');
+    }
+  });
+
+  confirmTotpBtn.addEventListener('click', async () => {
+    const pin = totpAuthPin.value.trim();
+    if (!pin) {
+      showFeedback(totpOptionsMsg, 'Enter your current PIN.', 'error');
+      return;
+    }
+
+    confirmTotpBtn.disabled = true;
+
+    try {
+      const res = await sendMessage({
+        type: 'GET_TOTP_SECRET_WITH_PIN',
+        pin: pin
+      });
+
+      if (res.success && res.totpSecret && window.TOTPEngine) {
+        showFeedback(totpOptionsMsg, 'Authenticator details revealed.', 'success');
+        const otpUrl = TOTPEngine.getOtpAuthUrl(res.totpSecret, 'Chrome Profile', 'Browser Lock');
+        optionsQrBox.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 150);
+        optionsSecretCode.textContent = TOTPEngine.formatSecret(res.totpSecret);
+        totpSecretArea.style.display = 'block';
+        totpAuthPin.value = '';
+      } else {
+        showFeedback(totpOptionsMsg, res.error || 'Incorrect PIN.', 'error');
+      }
+    } catch (err) {
+      showFeedback(totpOptionsMsg, 'Error: ' + err.message, 'error');
+    } finally {
+      confirmTotpBtn.disabled = false;
+    }
+  });
+
   // ---- Reset extension ----
 
   resetBtn.addEventListener('click', async () => {

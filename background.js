@@ -6,6 +6,8 @@
 
 'use strict';
 
+importScripts('totp.js');
+
 // --------------- Constants ---------------
 
 const STATES = Object.freeze({
@@ -26,6 +28,7 @@ const LOCKOUT_TIERS = [
 
 const LOCK_WINDOW = { width: 420, height: 520 };
 const SETUP_WINDOW = { width: 480, height: 600 };
+const RECOVERY_WINDOW = { width: 420, height: 560 };
 
 // --------------- In-memory flags (not security state) ---------------
 
@@ -97,13 +100,14 @@ const DEFAULT_SETTINGS = Object.freeze({
 
 async function getStore() {
   const raw = await chrome.storage.local.get([
-    'lockState', 'pinData', 'settings',
+    'lockState', 'pinData', 'totpSecret', 'settings',
     'failedAttempts', 'lockoutUntil',
     'lockWindowId', 'protectedWindowIds'
   ]);
   return {
     lockState:          raw.lockState          || STATES.UNINITIALIZED,
     pinData:            raw.pinData            || null,
+    totpSecret:         raw.totpSecret         || null,
     settings:           raw.settings           || { ...DEFAULT_SETTINGS },
     failedAttempts:     raw.failedAttempts     || 0,
     lockoutUntil:       raw.lockoutUntil       || 0,
@@ -179,6 +183,21 @@ async function createSetupWindow() {
       chrome.runtime.getURL('setup.html'),
       SETUP_WINDOW.width,
       SETUP_WINDOW.height
+    );
+    await setStore({ lockWindowId: win.id });
+    return win;
+  } finally {
+    isCreatingLockWindow = false;
+  }
+}
+
+async function createRecoveryWindow() {
+  isCreatingLockWindow = true;
+  try {
+    const win = await openPopupWindow(
+      chrome.runtime.getURL('recovery.html'),
+      RECOVERY_WINDOW.width,
+      RECOVERY_WINDOW.height
     );
     await setStore({ lockWindowId: win.id });
     return win;
@@ -500,11 +519,15 @@ async function handleMessage(msg, sender) {
     // ---- Setup: create initial PIN ----
     case 'CREATE_PIN': {
       const pinData = await createPinData(msg.pin);
-      await setStore({
+      const updates = {
         pinData,
         lockState: STATES.LOCKED,
         settings: { ...DEFAULT_SETTINGS }
-      });
+      };
+      if (msg.totpSecret) {
+        updates.totpSecret = msg.totpSecret;
+      }
+      await setStore(updates);
 
       // Close setup window → lock browser
       const setupWinId = sender.tab ? sender.tab.windowId : null;
@@ -631,6 +654,79 @@ async function handleMessage(msg, sender) {
       });
       lockEnforcementActive = false;
       return { success: true };
+    }
+
+    // ---- Switch to Recovery Window from Lock Screen ----
+    case 'OPEN_RECOVERY_WINDOW': {
+      const store = await getStore();
+      if (store.lockWindowId != null) {
+        try { await chrome.windows.remove(store.lockWindowId); }
+        catch (_) { /* ok */ }
+      }
+      await setStore({ lockWindowId: null });
+      await createRecoveryWindow();
+      return { success: true };
+    }
+
+    // ---- Switch to Lock Window from Recovery Screen ----
+    case 'OPEN_LOCK_WINDOW': {
+      const store = await getStore();
+      if (store.lockWindowId != null) {
+        try { await chrome.windows.remove(store.lockWindowId); }
+        catch (_) { /* ok */ }
+      }
+      await setStore({ lockWindowId: null });
+      await createLockWindow();
+      return { success: true };
+    }
+
+    // ---- Verify Offline TOTP Code ----
+    case 'VERIFY_TOTP': {
+      const store = await getStore();
+      if (!store.totpSecret) {
+        return { success: false, error: 'Authenticator App is not configured for this profile.' };
+      }
+
+      const valid = await self.TOTPEngine.verifyTOTP(msg.token, store.totpSecret);
+      if (valid) {
+        return { success: true };
+      }
+      return { success: false, error: 'Invalid or expired code. Please try again.' };
+    }
+
+    // ---- Reset PIN after successful Recovery Verification ----
+    case 'RESET_PIN_WITH_RECOVERY': {
+      if (!msg.newPin || msg.newPin.length < 4) {
+        return { success: false, error: 'PIN must be at least 4 digits.' };
+      }
+
+      const newPinData = await createPinData(msg.newPin);
+      await setStore({
+        pinData: newPinData,
+        failedAttempts: 0,
+        lockoutUntil: 0
+      });
+
+      // Restore windows and complete recovery
+      await unlockBrowser();
+      return { success: true };
+    }
+
+    // ---- Options: Get/Set TOTP Secret with PIN confirmation ----
+    case 'GET_TOTP_SECRET_WITH_PIN': {
+      const store = await getStore();
+      if (!store.pinData) return { success: false, error: 'No PIN set.' };
+
+      const ok = await verifyPin(msg.pin, store.pinData);
+      if (!ok) return { success: false, error: 'Current PIN is incorrect.' };
+
+      let secret = store.totpSecret;
+      if (!secret && self.TOTPEngine) {
+        secret = self.TOTPEngine.generateSecret(20);
+        await setStore({ totpSecret: secret });
+      }
+
+      return { success: true, totpSecret: secret };
     }
 
     // ---- Options / action: lock now ----

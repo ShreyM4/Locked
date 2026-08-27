@@ -362,6 +362,25 @@ body {
   text-decoration: underline;
 }
 
+.action-btn-sm {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.action-btn-sm:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 /* ---- Danger section ---- */
 
 .danger-section {

@@ -296,6 +296,24 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ---- Forgot PIN button ---- */
+
+.forgot-pin-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  margin-top: 14px;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.forgot-pin-btn:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
 /* ---- Footer ---- */
 
 .footer-note {

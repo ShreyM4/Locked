@@ -66,6 +66,15 @@
     attemptUnlock();
   });
 
+  // ---- Forgot PIN button ----
+
+  const forgotPinBtn = document.getElementById('forgot-pin-btn');
+  if (forgotPinBtn) {
+    forgotPinBtn.addEventListener('click', async () => {
+      await sendMessage({ type: 'OPEN_RECOVERY_WINDOW' });
+    });
+  }
+
   // ---- Core unlock attempt ----
 
   async function attemptUnlock() {

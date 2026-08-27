@@ -101,6 +101,41 @@
       </div>
     </section>
 
+    <!-- Recovery Options -->
+    <section class="section">
+      <h2 class="section-title">Account Recovery</h2>
+      
+      <div class="shortcut-row" style="margin-top: 0; padding-top: 0; border-top: none;">
+        <div class="shortcut-info">
+          <span class="toggle-name">Windows Security Verification</span>
+          <span class="toggle-desc">Verify with Windows PIN or Password via native helper</span>
+        </div>
+        <button id="test-windows-btn" class="action-btn-sm" type="button">Test Verification</button>
+      </div>
+      <div id="test-win-msg" class="feedback-msg" role="status"></div>
+
+      <div class="shortcut-row">
+        <div class="shortcut-info">
+          <span class="toggle-name">Authenticator App (TOTP)</span>
+          <span class="toggle-desc">Google Authenticator or any 2FA app</span>
+        </div>
+        <button id="toggle-totp-view-btn" class="action-btn-sm" type="button">View / Setup QR</button>
+      </div>
+
+      <div id="options-totp-box" style="display: none; margin-top: 14px; padding: 14px; background: var(--input-bg); border-radius: var(--radius); text-align: center;">
+        <input type="password" id="totp-auth-pin" class="text-input" maxlength="16"
+               inputmode="numeric" autocomplete="off" placeholder="Enter PIN to view/setup Authenticator" style="margin-bottom: 10px;">
+        <button id="confirm-totp-auth-btn" class="action-btn" type="button" style="margin-bottom: 10px;">Reveal Authenticator Setup</button>
+        
+        <div id="totp-secret-area" style="display: none;">
+          <div id="options-qr-container" style="display: flex; justify-content: center; margin: 10px auto;"></div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Manual Key:</div>
+          <code id="options-secret-code" style="font-family: monospace; font-size: 13px; color: var(--accent-hover); letter-spacing: 1px;"></code>
+        </div>
+      </div>
+      <div id="totp-options-msg" class="feedback-msg" role="status"></div>
+    </section>
+
     <!-- Reset -->
     <section class="section danger-section">
       <h2 class="section-title danger-title">Reset Extension</h2>
@@ -118,6 +153,7 @@
     </footer>
   </div>
 
+  <script src="totp.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

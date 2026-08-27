@@ -95,7 +95,7 @@
     confirmInput.focus();
   }
 
-  // ---- Back button ----
+  // ---- Back button (Step 2 -> Step 1) ----
 
   backBtn.addEventListener('click', () => {
     stepConfirm.classList.remove('active');
@@ -104,15 +104,23 @@
     newPinInput.focus();
   });
 
-  // ---- Step 2: Confirm & Create ----
+  // ---- Step 2: Confirm -> Step 3: TOTP Setup ----
 
-  confirmBtn.addEventListener('click', () => finishSetup());
+  const stepTotp = document.getElementById('step-totp');
+  const qrContainer = document.getElementById('qr-container');
+  const secretKeyText = document.getElementById('secret-key-text');
+  const finishSetupBtn = document.getElementById('finish-setup-btn');
+  const backToStep2Btn = document.getElementById('back-to-step2-btn');
+
+  let generatedTotpSecret = '';
+
+  confirmBtn.addEventListener('click', () => goToTotpSetup());
 
   confirmInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') finishSetup();
+    if (e.key === 'Enter') goToTotpSetup();
   });
 
-  async function finishSetup() {
+  function goToTotpSetup() {
     const pin = confirmInput.value.trim();
 
     if (pin !== createdPin) {
@@ -124,12 +132,42 @@
     }
 
     clearError();
-    confirmBtn.classList.add('loading');
-    confirmBtn.disabled = true;
-    backBtn.disabled = true;
+
+    // Generate offline TOTP secret
+    if (!generatedTotpSecret && window.TOTPEngine) {
+      generatedTotpSecret = TOTPEngine.generateSecret(20);
+      const otpUrl = TOTPEngine.getOtpAuthUrl(generatedTotpSecret, 'Chrome Profile', 'Browser Lock');
+      qrContainer.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 148);
+      secretKeyText.textContent = TOTPEngine.formatSecret(generatedTotpSecret);
+    }
+
+    stepConfirm.classList.remove('active');
+    stepTotp.classList.add('active');
+  }
+
+  backToStep2Btn.addEventListener('click', () => {
+    stepTotp.classList.remove('active');
+    stepConfirm.classList.add('active');
+    clearError();
+    confirmInput.focus();
+  });
+
+  // ---- Step 3: Finish Setup & Lock ----
+
+  finishSetupBtn.addEventListener('click', () => finishSetup());
+
+  async function finishSetup() {
+    clearError();
+    finishSetupBtn.classList.add('loading');
+    finishSetupBtn.disabled = true;
+    backToStep2Btn.disabled = true;
 
     try {
-      const result = await sendMessage({ type: 'CREATE_PIN', pin });
+      const result = await sendMessage({
+        type: 'CREATE_PIN',
+        pin: createdPin,
+        totpSecret: generatedTotpSecret
+      });
 
       if (result.success) {
         // Background will close this window and open lock window
@@ -140,9 +178,9 @@
     } catch (err) {
       showError('An error occurred. Please try again.');
     } finally {
-      confirmBtn.classList.remove('loading');
-      confirmBtn.disabled = false;
-      backBtn.disabled = false;
+      finishSetupBtn.classList.remove('loading');
+      finishSetupBtn.disabled = false;
+      backToStep2Btn.disabled = false;
     }
   }
 

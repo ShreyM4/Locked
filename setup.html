@@ -75,10 +75,29 @@
           >
         </div>
         <button id="confirm-btn" class="primary-btn" type="button">
-          <span class="btn-text">Set PIN &amp; Lock Browser</span>
-          <span class="btn-spinner" id="spinner" aria-hidden="true"></span>
+          <span class="btn-text">Next: Set Up Recovery</span>
         </button>
         <button id="back-btn" class="secondary-btn" type="button">Back</button>
+      </div>
+
+      <!-- Step 3: Recovery Authenticator (TOTP) -->
+      <div id="step-totp" class="step">
+        <label class="field-label" style="text-align: center;">Scan with Authenticator App (Offline Recovery)</label>
+        
+        <div id="qr-container" class="qr-box"></div>
+        
+        <div class="secret-display-wrap">
+          <span class="secret-label">Manual Key:</span>
+          <code id="secret-key-text" class="secret-key"></code>
+        </div>
+
+        <p class="totp-note">Scan this QR code with Google Authenticator or any 2FA app. You can use it to reset your PIN if forgotten.</p>
+
+        <button id="finish-setup-btn" class="primary-btn" type="button">
+          <span class="btn-text">Complete Setup &amp; Lock</span>
+          <span class="btn-spinner" id="spinner" aria-hidden="true"></span>
+        </button>
+        <button id="back-to-step2-btn" class="secondary-btn" type="button">Back</button>
       </div>
 
       <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
@@ -87,6 +106,7 @@
     <p class="footer-note">Everything stays local — no accounts, no cloud, no tracking</p>
   </div>
 
+  <script src="totp.js"></script>
   <script src="setup.js"></script>
 </body>
 </html>

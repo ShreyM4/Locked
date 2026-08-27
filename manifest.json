@@ -6,7 +6,8 @@
 
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "nativeMessaging"
   ],
 
   "optional_permissions": [

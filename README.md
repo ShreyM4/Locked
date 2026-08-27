@@ -1,138 +1,83 @@
-# Browser Lock — Privacy-First Chrome Extension
+# 🔒 Browser Lock — Privacy-First Chrome Profile Security
 
-A Chrome Extension (Manifest V3) that acts as a **browser-profile lock screen** with PIN authentication and **Forgot PIN Recovery** via Offline Google Authenticator / 2FA.
+<div align="center">
+  <img src="logo.svg" alt="Browser Lock Logo" width="120" height="120">
+  <h3>Modern, Airtight, 100% Offline Profile Lock for Google Chrome</h3>
+  <p>Protect your tabs, history, and active session with military-grade PBKDF2 encryption and offline Google Authenticator 2FA recovery.</p>
 
-**Zero external connections. Zero tracking. Zero analytics. Everything stays local.**
-
----
-
-## Installation
-
-1. Download or clone this folder (`Locked/`)
-2. Open Chrome and navigate to `chrome://extensions`
-3. Enable **Developer mode** (toggle in top-right)
-4. Click **Load unpacked**
-5. Select the `Locked` folder
-6. The extension will install and immediately open the **Setup** screen
+  <p>
+    <img src="https://img.shields.io/badge/Manifest-V3-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
+    <img src="https://img.shields.io/badge/Security-PBKDF2--SHA256-10b981?style=for-the-badge" alt="PBKDF2-SHA256">
+    <img src="https://img.shields.io/badge/Network-0%20Requests-38bdf8?style=for-the-badge" alt="0 Network Requests">
+    <img src="https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge" alt="License MIT">
+  </p>
+</div>
 
 ---
 
-## How It Works
+## 🌟 Key Features
 
-### First Run & Setup
-1. Extension installs → setup window appears
-2. **Step 1:** Create a PIN (4–16 digits)
-3. **Step 2:** Confirm your PIN
-4. **Step 3 (Recovery Authenticator):**
-   - Scan the offline QR code with **Google Authenticator** (or any 2FA app).
-   - Enter the current **6-digit code** from the app to verify you scanned it.
-   - Click **Complete Setup & Lock** → Native **Save As** prompt opens to save your raw binary recovery key.
-   - PIN is hashed with PBKDF2-SHA256 (600,000 iterations) + random salt.
-5. Browser locks immediately so you can verify your PIN works.
-
-### Subsequent Startups
-1. Chrome profile starts → extension detects startup via `chrome.runtime.onStartup`
-2. All existing windows are **covered with a black canvas, fullscreened, and minimized** (preserving your session and keeping Windows taskbar thumbnail previews 100% black)
-3. A dedicated popup window appears with the lock screen
-4. Enter your PIN → windows and previous tabs are restored cleanly
-
-### Forgot PIN Recovery Flow
-```text
-Lock Screen ("Forgot PIN?")
-    ↓
-Recovery Window (Two Options):
-  ├─ Option 1: App Code (6-digit TOTP from Google Authenticator)
-  └─ Option 2: Saved Key File / Text (Upload saved binary key file or paste manual key)
-    ↓
-Successful Local Verification
-    ↓
-Create New Browser Lock PIN (New PIN + Confirm PIN)
-    ↓
-Browser Unlocks & Restores Previous Tabs
-```
-*If verification fails or is cancelled, the browser remains locked.*
+- 🛡️ **Airtight Startup & Instant Lock:** Automatically minimizes and locks your browsing session when Chrome opens or when triggered manually (`Ctrl+Shift+Z`).
+- 🕶️ **Windows Taskbar Peek Privacy:** Prevents desktop shoulder-surfers from previewing tabs in the Windows taskbar thumbnail peek by rendering an instant solid-black fullscreen canvas before minimizing.
+- 🔐 **PBKDF2-SHA256 PIN Encryption:** 600,000 iterations (OWASP recommended standard) with unique 16-byte cryptographically random salt per profile.
+- 📱 **Offline 2FA Recovery (Google Authenticator):** Standard RFC 6238 TOTP engine built right in with an offline SVG QR Code generator. No SMS, no emails, no servers.
+- 💾 **Binary Key File & Manual Key Backup:** Save a local raw key file or copy your Base32 secret string to recover your profile if you ever lose your phone.
+- ⏱️ **Brute-Force Attack Prevention:** Exponential lockout timers after consecutive failed PIN attempts.
+- ⚡ **Auto-Lock on Inactivity:** Optional auto-lock timer when stepping away from your computer.
+- 🌐 **100% Offline & Open Source:** Zero analytics, zero telemetry, zero tracking, zero third-party scripts.
 
 ---
 
-## Permissions
+## 🚀 Installation
 
-### Permanent Permissions (4)
+### Option 1: Chrome Web Store (Recommended)
+Install directly from the [Chrome Web Store](https://chrome.google.com/webstore).
 
-| Permission | Why Required | What Data It Exposes |
+### Option 2: Load Unpacked (Developer Mode)
+1. Clone or download this repository:
+   ```bash
+   git clone https://github.com/your-username/browser-lock.git
+   ```
+2. Open Google Chrome and navigate to `chrome://extensions`.
+3. Enable **Developer mode** toggle in the top right corner.
+4. Click **Load unpacked** and select the root folder of this repository.
+5. The Browser Lock setup screen will open immediately.
+
+---
+
+## 🔒 Security & Cryptographic Architecture
+
+| Layer | Implementation | Details |
 |---|---|---|
-| `storage` | Persist PIN hash/salt, TOTP secret, lock state, settings, and failed-attempt counters across service worker restarts | The extension's own isolated storage only — **no access to browsing data, history, bookmarks, or any other user data** |
-| `alarms` | Schedule brute-force lockout timers and inactivity re-lock timers | **Nothing** — only allows scheduling named timers within the extension |
-| `identity` | Access `chrome.identity.getProfileUserInfo` to retrieve the signed-in Google account email for labeling the 2FA authenticator entry | **Nothing external** — local read of profile user info |
-| `identity.email` | Allows `chrome.identity.getProfileUserInfo` to return the email string (e.g. `user@gmail.com`) for the QR code label | Google account email only for local offline QR label |
-
-### Optional Permission (1)
-
-| Permission | Why Required | When Requested | What Data It Exposes |
-|---|---|---|---|
-| `idle` | Detect system-wide inactivity for the "auto-lock after N minutes" feature | Only when the user enables an inactivity timeout in Settings | System idle state (active/idle/locked) — **no browsing data** |
+| **PIN Hash Function** | PBKDF2 (HMAC-SHA-256) | 600,000 rounds via standard Web Crypto API |
+| **Salt Generation** | `crypto.getRandomValues()` | 16-byte cryptographically secure random salt |
+| **Hash Verification** | Constant-time XOR comparison | Resistant to side-channel timing attacks |
+| **2FA Recovery** | RFC 6238 TOTP (HMAC-SHA-1) | Compatible with Google Authenticator, Authy, Aegis, 1Password |
+| **Storage Security** | `chrome.storage.local` | Sandboxed to this extension profile only; never synchronized across devices |
 
 ---
 
-## PIN Security & Brute-Force Protection
+## 🔑 Permissions Breakdown
 
-| Property | Value |
+Browser Lock follows the principle of least privilege:
+
+| Permission | Purpose |
 |---|---|
-| Algorithm | PBKDF2 |
-| Hash function | SHA-256 |
-| Iterations | 600,000 (OWASP recommendation) |
-| Salt | 16 bytes, cryptographically random (`crypto.getRandomValues`) |
-| TOTP Key | 20 bytes, cryptographically random (`crypto.getRandomValues`) |
-| Verification | Constant-time XOR comparison against stored hash |
-| Lockout after 5 failed attempts | 10 seconds |
-| Lockout after 10 failed attempts | 30 seconds |
-| Lockout after 15+ failed attempts | 60 seconds |
+| `storage` | Stores PIN hash, salt, TOTP secret, and user settings strictly in local isolated extension storage. |
+| `alarms` | Schedules brute-force lockout and inactivity auto-lock timers. |
+| `identity` / `identity.email` | Reads the local profile's signed-in Google account email to automatically label the Google Authenticator entry (e.g. `BrowserLock (user@gmail.com)`). Never sent to any server. |
+| `idle` *(Optional)* | Detects system idle state if the user enables the inactivity timer in Settings. |
 
 ---
 
-## Project Structure
+## 📄 Privacy Policy
 
-```
-Locked/
-├── manifest.json       Manifest V3 with minimal permissions
-├── background.js       Service worker — state machine, crypto, recovery handlers
-├── totp.js             Offline RFC 6238 TOTP & pure SVG QR Code generator
-├── cover.html          Black screen cover tab for Windows taskbar Peek privacy
-├── lock.html           Lock screen UI with "Forgot PIN?" trigger
-├── lock.css            Lock screen styles (dark glassmorphism)
-├── lock.js             Lock screen logic
-├── recovery.html       Recovery screen (Google Authenticator TOTP & Saved Key File)
-├── recovery.css        Recovery UI styles (segmented tab controls)
-├── recovery.js         Recovery client logic (FileReader binary parser)
-├── setup.html          First-run onboarding (PIN creation + TOTP QR + Verification)
-├── setup.css           Setup screen styles
-├── setup.js            Setup logic (with binary key export)
-├── options.html        Settings page UI (PIN, Shortcut, Inactivity, TOTP QR)
-├── options.css         Settings styles
-├── options.js          Settings logic
-├── icons/
-│   ├── icon16.png
-│   ├── icon32.png
-│   ├── icon48.png
-│   └── icon128.png
-└── README.md           This documentation
-```
+Browser Lock is designed with strict **zero-knowledge privacy**:
+- No personal data, browsing history, cookies, or credentials are ever collected or transmitted.
+- Read our full [Privacy Policy](privacy.html).
 
 ---
 
-## Testing Guide
+## 📜 License
 
-### 1. Lock & Normal PIN Flow
-- Lock browser (Ctrl+Shift+Z or click icon).
-- Enter correct PIN → unlocks normally and restores windows.
-
-### 2. Forgot PIN → Authenticator App (TOTP)
-- On lock screen, click **"Forgot PIN?"**.
-- On the **"App Code"** tab, enter the 6-digit TOTP code from Google Authenticator.
-- Transitions to **"Create New PIN"**.
-- Enter new PIN and confirm → saves new PIN and unlocks browser.
-
-### 3. Forgot PIN → Saved Key File / Manual Text
-- On lock screen, click **"Forgot PIN?"**.
-- Switch to the **"Saved Key / File"** tab.
-- Click **"Click to upload saved key file"** and select the binary key file saved during setup (e.g. `browser-lock-xxx-key`), OR paste the manual Base32 key string into the field and click **"Verify Key"**.
-- Key is verified locally → transitions to **"Create New PIN"** → sets new PIN and unlocks browser.
+This project is licensed under the [MIT License](LICENSE).

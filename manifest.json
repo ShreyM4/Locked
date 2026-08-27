@@ -7,7 +7,8 @@
   "permissions": [
     "storage",
     "alarms",
-    "nativeMessaging"
+    "identity",
+    "identity.email"
   ],
 
   "optional_permissions": [

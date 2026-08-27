@@ -6,20 +6,32 @@
 
 (function () {
   // DOM refs
-  const stepCreate  = document.getElementById('step-create');
-  const stepConfirm = document.getElementById('step-confirm');
-  const newPinInput = document.getElementById('new-pin');
-  const confirmInput = document.getElementById('confirm-pin');
-  const nextBtn     = document.getElementById('next-btn');
-  const confirmBtn  = document.getElementById('confirm-btn');
-  const backBtn     = document.getElementById('back-btn');
-  const errorMsg    = document.getElementById('error-msg');
-  const strengthFill  = document.getElementById('strength-fill');
-  const strengthLabel = document.getElementById('strength-label');
+  const stepCreate        = document.getElementById('step-create');
+  const stepConfirm       = document.getElementById('step-confirm');
+  const stepTotp          = document.getElementById('step-totp');
+  
+  const newPinInput       = document.getElementById('new-pin');
+  const confirmInput      = document.getElementById('confirm-pin');
+  const setupAccountEmail = document.getElementById('setup-account-email');
+  const setupTotpCode     = document.getElementById('setup-totp-code');
+
+  const nextBtn           = document.getElementById('next-btn');
+  const confirmBtn        = document.getElementById('confirm-btn');
+  const backBtn           = document.getElementById('back-btn');
+  const finishSetupBtn    = document.getElementById('finish-setup-btn');
+  const backToStep2Btn    = document.getElementById('back-to-step2-btn');
+
+  const qrContainer       = document.getElementById('qr-container');
+  const secretKeyText     = document.getElementById('secret-key-text');
+  const errorMsg          = document.getElementById('error-msg');
+  const strengthFill      = document.getElementById('strength-fill');
+  const strengthLabel     = document.getElementById('strength-label');
 
   let createdPin = '';
+  let generatedTotpSecret = '';
+  let detectedProfileEmail = 'Chrome Profile';
 
-  // ---- PIN filtering (digits only) ----
+  // ---- PIN & TOTP filtering (digits only) ----
 
   function filterDigits(input) {
     input.addEventListener('input', () => {
@@ -38,6 +50,7 @@
 
   filterDigits(newPinInput);
   filterDigits(confirmInput);
+  filterDigits(setupTotpCode);
 
   // ---- PIN strength indicator ----
 
@@ -106,21 +119,52 @@
 
   // ---- Step 2: Confirm -> Step 3: TOTP Setup ----
 
-  const stepTotp = document.getElementById('step-totp');
-  const qrContainer = document.getElementById('qr-container');
-  const secretKeyText = document.getElementById('secret-key-text');
-  const finishSetupBtn = document.getElementById('finish-setup-btn');
-  const backToStep2Btn = document.getElementById('back-to-step2-btn');
-
-  let generatedTotpSecret = '';
-
   confirmBtn.addEventListener('click', () => goToTotpSetup());
 
   confirmInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') goToTotpSetup();
   });
 
-  function goToTotpSetup() {
+  // Fetch Google Account Email via official Chrome Identity API
+  async function getProfileAccountEmail() {
+    try {
+      if (chrome.identity && chrome.identity.getProfileUserInfo) {
+        const info = await new Promise((resolve) => {
+          chrome.identity.getProfileUserInfo({ accountStatus: 'ANY' }, (res) => {
+            if (chrome.runtime.lastError) {
+              console.warn('chrome.identity error:', chrome.runtime.lastError.message);
+              resolve({ email: '', id: '', error: chrome.runtime.lastError.message });
+            } else {
+              resolve(res || { email: '', id: '' });
+            }
+          });
+        });
+
+        console.log('Profile info:', info);
+        console.log('Email:', JSON.stringify(info ? info.email : ''));
+        console.log('ID:', JSON.stringify(info ? info.id : ''));
+
+        if (info && info.email && info.email.trim()) {
+          return info.email.trim();
+        }
+      } else {
+        console.warn('chrome.identity.getProfileUserInfo is not available.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile email:', err);
+    }
+    return '';
+  }
+
+  function renderQRCode(label) {
+    if (!generatedTotpSecret || !window.TOTPEngine) return;
+    const account = label || detectedProfileEmail || 'Chrome Profile';
+    const otpUrl = TOTPEngine.getOtpAuthUrl(generatedTotpSecret, account, 'BrowserLock');
+    qrContainer.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 114);
+    secretKeyText.textContent = TOTPEngine.formatSecret(generatedTotpSecret);
+  }
+
+  async function goToTotpSetup() {
     const pin = confirmInput.value.trim();
 
     if (pin !== createdPin) {
@@ -133,16 +177,24 @@
 
     clearError();
 
-    // Generate offline TOTP secret
+    // Fetch primary Google Account email from Chrome Identity API
+    const email = await getProfileAccountEmail();
+    detectedProfileEmail = email || 'Chrome Profile';
+
+    if (setupAccountEmail) {
+      setupAccountEmail.textContent = email ? email : 'Chrome Profile (Not signed in)';
+    }
+
+    // Generate offline cryptographically random TOTP secret
     if (!generatedTotpSecret && window.TOTPEngine) {
       generatedTotpSecret = TOTPEngine.generateSecret(20);
-      const otpUrl = TOTPEngine.getOtpAuthUrl(generatedTotpSecret, 'Chrome Profile', 'Browser Lock');
-      qrContainer.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 148);
-      secretKeyText.textContent = TOTPEngine.formatSecret(generatedTotpSecret);
     }
+    renderQRCode(detectedProfileEmail);
 
     stepConfirm.classList.remove('active');
     stepTotp.classList.add('active');
+    setupTotpCode.value = '';
+    setTimeout(() => setupTotpCode.focus(), 100);
   }
 
   backToStep2Btn.addEventListener('click', () => {
@@ -156,21 +208,89 @@
 
   finishSetupBtn.addEventListener('click', () => finishSetup());
 
+  setupTotpCode.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') finishSetup();
+  });
+
+  async function saveKeyBinaryFile(secretBase32, profileLabel) {
+    if (!window.TOTPEngine) return;
+    const rawBytes = TOTPEngine.base32Decode(secretBase32);
+    const safeName = (profileLabel || 'chrome-profile').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    const filename = `browser-lock-${safeName}-key`;
+
+    try {
+      if (typeof window.showSaveFilePicker === 'function') {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{
+            description: 'Binary Key File',
+            accept: { 'application/octet-stream': [] }
+          }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(rawBytes);
+        await writable.close();
+        return;
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+
+    // Fallback: standard browser file download
+    try {
+      const blob = new Blob([rawBytes], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (_) {}
+  }
+
   async function finishSetup() {
     clearError();
+    const code = setupTotpCode.value.trim();
+
+    if (code.length !== 6) {
+      showError('Please enter the 6-digit code from Google Authenticator to confirm setup.');
+      shakeInput(setupTotpCode);
+      setupTotpCode.focus();
+      return;
+    }
+
+    // Verify TOTP code locally to ensure user actually scanned it
+    if (window.TOTPEngine) {
+      const isValid = await TOTPEngine.verifyTOTP(code, generatedTotpSecret);
+      if (!isValid) {
+        showError('Invalid code. Ensure you scanned the QR code in Google Authenticator and enter the current 6 digits.');
+        shakeInput(setupTotpCode);
+        setupTotpCode.value = '';
+        setupTotpCode.focus();
+        return;
+      }
+    }
+
     finishSetupBtn.classList.add('loading');
     finishSetupBtn.disabled = true;
     backToStep2Btn.disabled = true;
 
     try {
+      // Prompt user to save the manual key as a binary file
+      await saveKeyBinaryFile(generatedTotpSecret, detectedProfileEmail);
+
       const result = await sendMessage({
         type: 'CREATE_PIN',
         pin: createdPin,
-        totpSecret: generatedTotpSecret
+        totpSecret: generatedTotpSecret,
+        profileName: detectedProfileEmail
       });
 
       if (result.success) {
-        // Background will close this window and open lock window
         return;
       }
 

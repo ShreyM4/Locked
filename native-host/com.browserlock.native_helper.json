@@ -1,9 +1,0 @@
-{
-  "name": "com.browserlock.native_helper",
-  "description": "Browser Lock Windows Native Credential Verifier",
-  "path": "F:\\Development\\Locked\\native-host\\BrowserLockNativeHelper.exe",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://*/*"
-  ]
-}

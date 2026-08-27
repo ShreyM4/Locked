@@ -1,31 +1,62 @@
 // ============================================================
 // Browser Lock — Account Recovery Logic
-// Supports Windows Security Native Verification & Offline TOTP
+// Offline TOTP & Saved Key File / Text Verification & PIN Reset
 // ============================================================
 
 'use strict';
 
 (function () {
-  const NATIVE_HOST_NAME = 'com.browserlock.native_helper';
+  // DOM Elements - Views & Titles
+  const methodsView      = document.getElementById('methods-view');
+  const resetPinView     = document.getElementById('reset-pin-view');
+  const viewTitle        = document.getElementById('view-title');
+  const viewSubtitle     = document.getElementById('view-subtitle');
 
-  // DOM Elements
-  const methodsView    = document.getElementById('methods-view');
-  const resetPinView   = document.getElementById('reset-pin-view');
-  const viewTitle      = document.getElementById('view-title');
-  const viewSubtitle   = document.getElementById('view-subtitle');
+  // Tabs & Sub-views
+  const tabTotpBtn       = document.getElementById('tab-totp-btn');
+  const tabFileBtn       = document.getElementById('tab-file-btn');
+  const totpMethodArea   = document.getElementById('totp-method-area');
+  const fileMethodArea   = document.getElementById('file-method-area');
 
-  const winVerifyBtn   = document.getElementById('windows-verify-btn');
-  const totpInput      = document.getElementById('totp-input');
-  const totpVerifyBtn  = document.getElementById('totp-verify-btn');
-  const backToLockBtn  = document.getElementById('back-to-lock-btn');
+  // TOTP Elements
+  const totpInput        = document.getElementById('totp-input');
+  const totpVerifyBtn    = document.getElementById('totp-verify-btn');
+  
+  // File & Key Elements
+  const keyFileInput     = document.getElementById('key-file-input');
+  const uploadFileBtn    = document.getElementById('upload-file-btn');
+  const uploadBoxText    = document.getElementById('upload-box-text');
+  const manualKeyInput   = document.getElementById('manual-key-input');
+  const keyVerifyBtn     = document.getElementById('key-verify-btn');
 
-  const newPinInput    = document.getElementById('new-pin');
-  const confirmPinInput= document.getElementById('confirm-pin');
-  const saveNewPinBtn  = document.getElementById('save-new-pin-btn');
-
-  const errorMsg       = document.getElementById('error-msg');
+  // Navigation & Reset Elements
+  const backToLockBtn    = document.getElementById('back-to-lock-btn');
+  const newPinInput      = document.getElementById('new-pin');
+  const confirmPinInput  = document.getElementById('confirm-pin');
+  const saveNewPinBtn    = document.getElementById('save-new-pin-btn');
+  const errorMsg         = document.getElementById('error-msg');
 
   let isSubmitting = false;
+
+  // ---- Tab Switching ----
+
+  tabTotpBtn.addEventListener('click', () => {
+    tabTotpBtn.classList.add('active');
+    tabFileBtn.classList.remove('active');
+    totpMethodArea.classList.add('active');
+    fileMethodArea.classList.remove('active');
+    clearError();
+    totpInput.focus();
+  });
+
+  tabFileBtn.addEventListener('click', () => {
+    tabFileBtn.classList.add('active');
+    tabTotpBtn.classList.remove('active');
+    fileMethodArea.classList.add('active');
+    totpMethodArea.classList.remove('active');
+    clearError();
+    manualKeyInput.focus();
+  });
 
   // ---- Digits only input filter ----
 
@@ -39,50 +70,14 @@
   filterDigits(newPinInput);
   filterDigits(confirmPinInput);
 
-  // ---- 1. Windows Native Security Verification ----
-
-  winVerifyBtn.addEventListener('click', async () => {
-    if (isSubmitting) return;
-    clearError();
-    setButtonLoading(winVerifyBtn, true);
-    isSubmitting = true;
-
-    try {
-      // Connect to the local Windows native messaging host
-      chrome.runtime.sendNativeMessage(
-        NATIVE_HOST_NAME,
-        { action: 'verify_windows_credentials' },
-        (response) => {
-          setButtonLoading(winVerifyBtn, false);
-          isSubmitting = false;
-
-          if (chrome.runtime.lastError) {
-            const err = chrome.runtime.lastError.message;
-            if (err.includes('not found') || err.includes('specified host')) {
-              showError('Windows Native Helper is not installed yet. Run install.bat in native-host/ or use Authenticator App below.');
-            } else {
-              showError('Native verification error: ' + err);
-            }
-            return;
-          }
-
-          if (response && response.success) {
-            transitionToResetPIN();
-          } else if (response && response.cancelled) {
-            showError('Windows verification was cancelled.');
-          } else {
-            showError((response && response.error) || 'Windows credential verification failed.');
-          }
-        }
-      );
-    } catch (err) {
-      setButtonLoading(winVerifyBtn, false);
-      isSubmitting = false;
-      showError('Failed to launch Windows Security: ' + err.message);
+  // Auto-submit when 6 digits are typed in TOTP input
+  totpInput.addEventListener('input', () => {
+    if (totpInput.value.length === 6) {
+      attemptTOTPVerify();
     }
   });
 
-  // ---- 2. Authenticator App (TOTP) Verification ----
+  // ---- 1. Authenticator App (TOTP) Verification ----
 
   totpVerifyBtn.addEventListener('click', () => attemptTOTPVerify());
 
@@ -125,7 +120,114 @@
     }
   }
 
-  // ---- 3. Transition to Create New PIN ----
+  // ---- 2. Saved Key File Verification ----
+
+  uploadFileBtn.addEventListener('click', () => {
+    keyFileInput.click();
+  });
+
+  keyFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    uploadBoxText.textContent = `Reading: ${file.name}...`;
+    clearError();
+
+    try {
+      // First read as ArrayBuffer for binary key files
+      const buffer = await readFileAsArrayBuffer(file);
+      const bytes = new Uint8Array(buffer);
+
+      let keyBase32 = '';
+
+      // If exactly 20 bytes, it's the raw binary key
+      if (bytes.length === 20 && window.TOTPEngine) {
+        keyBase32 = TOTPEngine.base32Encode(bytes);
+      } else {
+        // Fallback: try parsing as text/Base32 string
+        const text = new TextDecoder('utf-8').decode(bytes).trim();
+        keyBase32 = text.replace(/[^A-Z2-7]/gi, '').toUpperCase();
+      }
+
+      if (!keyBase32) {
+        uploadBoxText.textContent = 'Click to upload saved key file';
+        showError('Could not parse a valid recovery key from this file.');
+        shakeElement(uploadFileBtn);
+        return;
+      }
+
+      uploadBoxText.textContent = `Loaded: ${file.name}`;
+      await verifyRecoveryKey(keyBase32, uploadFileBtn);
+    } catch (err) {
+      uploadBoxText.textContent = 'Click to upload saved key file';
+      showError('Failed to read key file: ' + err.message);
+    } finally {
+      keyFileInput.value = '';
+    }
+  });
+
+  function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // ---- 3. Manual Key Text Verification ----
+
+  keyVerifyBtn.addEventListener('click', () => attemptManualKeyVerify());
+
+  manualKeyInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      attemptManualKeyVerify();
+    }
+  });
+
+  async function attemptManualKeyVerify() {
+    const raw = manualKeyInput.value.trim();
+    const cleanKey = raw.replace(/[^A-Z2-7]/gi, '').toUpperCase();
+
+    if (!cleanKey) {
+      showError('Please paste your manual Base32 recovery key.');
+      shakeElement(manualKeyInput);
+      manualKeyInput.focus();
+      return;
+    }
+
+    await verifyRecoveryKey(cleanKey, keyVerifyBtn);
+  }
+
+  async function verifyRecoveryKey(keyString, targetElement) {
+    if (isSubmitting) return;
+
+    clearError();
+    setButtonLoading(keyVerifyBtn, true);
+    isSubmitting = true;
+
+    try {
+      const res = await sendMessage({
+        type: 'VERIFY_RECOVERY_KEY',
+        key: keyString
+      });
+
+      if (res && res.success) {
+        transitionToResetPIN();
+      } else {
+        showError(res.error || 'Invalid recovery key. Please check your file/text and try again.');
+        if (targetElement) shakeElement(targetElement);
+      }
+    } catch (err) {
+      showError('Verification error: ' + err.message);
+    } finally {
+      setButtonLoading(keyVerifyBtn, false);
+      isSubmitting = false;
+    }
+  }
+
+  // ---- Transition to Create New PIN ----
 
   function transitionToResetPIN() {
     clearError();
@@ -136,7 +238,7 @@
     newPinInput.focus();
   }
 
-  // ---- 4. Save New PIN ----
+  // ---- Save New PIN ----
 
   saveNewPinBtn.addEventListener('click', () => attemptSaveNewPIN());
 
@@ -176,7 +278,6 @@
       });
 
       if (res && res.success) {
-        // Success! Background service worker updates credentials and unlocks browser.
         saveNewPinBtn.disabled = true;
         newPinInput.disabled = true;
         confirmPinInput.disabled = true;

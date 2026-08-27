@@ -12,9 +12,9 @@
     <div class="ambient-orb orb-2"></div>
 
     <div class="setup-card">
-      <!-- Shield icon -->
+      <!-- Compact Shield icon -->
       <div class="setup-icon" aria-hidden="true">
-        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
           <defs>
             <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#6366f1"/>
@@ -74,16 +74,24 @@
             aria-label="Confirm PIN"
           >
         </div>
-        <button id="confirm-btn" class="primary-btn" type="button">
-          <span class="btn-text">Next: Set Up Recovery</span>
-        </button>
-        <button id="back-btn" class="secondary-btn" type="button">Back</button>
+        <div class="button-row">
+          <button id="back-btn" class="secondary-btn btn-sm-flex" type="button">Back</button>
+          <button id="confirm-btn" class="primary-btn btn-lg-flex" type="button">
+            <span class="btn-text">Next: Recovery</span>
+          </button>
+        </div>
       </div>
 
       <!-- Step 3: Recovery Authenticator (TOTP) -->
       <div id="step-totp" class="step">
-        <label class="field-label" style="text-align: center;">Scan with Authenticator App (Offline Recovery)</label>
-        
+        <div class="account-badge" id="setup-account-badge">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="setup-account-email" class="account-email-text">Detecting profile email...</span>
+        </div>
+
         <div id="qr-container" class="qr-box"></div>
         
         <div class="secret-display-wrap">
@@ -91,19 +99,33 @@
           <code id="secret-key-text" class="secret-key"></code>
         </div>
 
-        <p class="totp-note">Scan this QR code with Google Authenticator or any 2FA app. You can use it to reset your PIN if forgotten.</p>
+        <div class="verify-code-wrap">
+          <input
+            type="text"
+            id="setup-totp-code"
+            class="verify-code-input"
+            maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            spellcheck="false"
+            placeholder="000000"
+            aria-label="6-digit Authenticator verification code"
+          >
+        </div>
 
-        <button id="finish-setup-btn" class="primary-btn" type="button">
-          <span class="btn-text">Complete Setup &amp; Lock</span>
-          <span class="btn-spinner" id="spinner" aria-hidden="true"></span>
-        </button>
-        <button id="back-to-step2-btn" class="secondary-btn" type="button">Back</button>
+        <div class="button-row">
+          <button id="back-to-step2-btn" class="secondary-btn btn-sm-flex" type="button">Back</button>
+          <button id="finish-setup-btn" class="primary-btn btn-lg-flex" type="button">
+            <span class="btn-text">Complete Setup &amp; Lock</span>
+            <span class="btn-spinner" id="spinner" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
 
       <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
     </div>
 
-    <p class="footer-note">Everything stays local — no accounts, no cloud, no tracking</p>
+    <p class="footer-note">Everything stays local — zero external data transfer</p>
   </div>
 
   <script src="totp.js"></script>

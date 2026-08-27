@@ -162,47 +162,6 @@
     }
   });
 
-  // ---- Test Windows Security Verification ----
-
-  const testWindowsBtn = document.getElementById('test-windows-btn');
-  const testWinMsg     = document.getElementById('test-win-msg');
-
-  testWindowsBtn.addEventListener('click', () => {
-    showFeedback(testWinMsg, 'Launching Windows Security...', '');
-    testWindowsBtn.disabled = true;
-
-    try {
-      chrome.runtime.sendNativeMessage(
-        'com.browserlock.native_helper',
-        { action: 'verify_windows_credentials' },
-        (response) => {
-          testWindowsBtn.disabled = false;
-
-          if (chrome.runtime.lastError) {
-            const err = chrome.runtime.lastError.message;
-            if (err.includes('not found') || err.includes('specified host')) {
-              showFeedback(testWinMsg, 'Native helper not installed. Run install.bat in native-host/ folder.', 'error');
-            } else {
-              showFeedback(testWinMsg, 'Error: ' + err, 'error');
-            }
-            return;
-          }
-
-          if (response && response.success) {
-            showFeedback(testWinMsg, 'Windows Security verification succeeded!', 'success');
-          } else if (response && response.cancelled) {
-            showFeedback(testWinMsg, 'Windows verification cancelled.', 'error');
-          } else {
-            showFeedback(testWinMsg, (response && response.error) || 'Verification failed.', 'error');
-          }
-        }
-      );
-    } catch (err) {
-      testWindowsBtn.disabled = false;
-      showFeedback(testWinMsg, 'Failed: ' + err.message, 'error');
-    }
-  });
-
   // ---- Authenticator App (TOTP) View / Setup ----
 
   const toggleTotpBtn    = document.getElementById('toggle-totp-view-btn');
@@ -210,9 +169,50 @@
   const totpAuthPin      = document.getElementById('totp-auth-pin');
   const confirmTotpBtn   = document.getElementById('confirm-totp-auth-btn');
   const totpSecretArea   = document.getElementById('totp-secret-area');
+  const optionsAccountEmail = document.getElementById('options-account-email');
   const optionsQrBox     = document.getElementById('options-qr-container');
   const optionsSecretCode= document.getElementById('options-secret-code');
   const totpOptionsMsg   = document.getElementById('totp-options-msg');
+
+  let revealedSecret = '';
+
+  async function getOptionsProfileEmail() {
+    try {
+      if (chrome.identity && chrome.identity.getProfileUserInfo) {
+        const info = await new Promise((resolve) => {
+          chrome.identity.getProfileUserInfo({ accountStatus: 'ANY' }, (res) => {
+            if (chrome.runtime.lastError) {
+              console.warn('chrome.identity error:', chrome.runtime.lastError.message);
+              resolve({ email: '', id: '', error: chrome.runtime.lastError.message });
+            } else {
+              resolve(res || { email: '', id: '' });
+            }
+          });
+        });
+
+        console.log('Profile info:', info);
+        console.log('Email:', JSON.stringify(info ? info.email : ''));
+        console.log('ID:', JSON.stringify(info ? info.id : ''));
+
+        if (info && info.email && info.email.trim()) {
+          return info.email.trim();
+        }
+      } else {
+        console.warn('chrome.identity.getProfileUserInfo is not available.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile email in options:', err);
+    }
+    return '';
+  }
+
+  function renderOptionsQR(accountLabel) {
+    if (!revealedSecret || !window.TOTPEngine) return;
+    const label = accountLabel || 'Chrome Profile';
+    const otpUrl = TOTPEngine.getOtpAuthUrl(revealedSecret, label, 'BrowserLock');
+    optionsQrBox.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 140);
+    optionsSecretCode.textContent = TOTPEngine.formatSecret(revealedSecret);
+  }
 
   toggleTotpBtn.addEventListener('click', () => {
     if (optionsTotpBox.style.display === 'none') {
@@ -222,6 +222,7 @@
     } else {
       optionsTotpBox.style.display = 'none';
       totpSecretArea.style.display = 'none';
+      revealedSecret = '';
       showFeedback(totpOptionsMsg, '', '');
     }
   });
@@ -243,9 +244,17 @@
 
       if (res.success && res.totpSecret && window.TOTPEngine) {
         showFeedback(totpOptionsMsg, 'Authenticator details revealed.', 'success');
-        const otpUrl = TOTPEngine.getOtpAuthUrl(res.totpSecret, 'Chrome Profile', 'Browser Lock');
-        optionsQrBox.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 150);
-        optionsSecretCode.textContent = TOTPEngine.formatSecret(res.totpSecret);
+        revealedSecret = res.totpSecret;
+
+        // Fetch live email or use stored profile name fallback
+        const fetchedEmail = await getOptionsProfileEmail();
+        const accountLabel = fetchedEmail || (res.profileName && res.profileName !== 'Chrome Profile' ? res.profileName : 'Chrome Profile');
+
+        if (optionsAccountEmail) {
+          optionsAccountEmail.textContent = accountLabel;
+        }
+
+        renderOptionsQR(accountLabel);
         totpSecretArea.style.display = 'block';
         totpAuthPin.value = '';
       } else {

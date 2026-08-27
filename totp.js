@@ -69,9 +69,11 @@
     return secret.match(/.{1,4}/g)?.join(' ') || secret;
   }
 
-  function getOtpAuthUrl(secret, label = 'ChromeProfile', issuer = 'BrowserLock') {
+  function getOtpAuthUrl(secret, label = 'Chrome Profile', issuer = 'BrowserLock') {
     const cleanSecret = secret.replace(/\s+/g, '').toUpperCase();
-    return `otpauth://totp/${issuer}:${label}?secret=${cleanSecret}&issuer=${issuer}`;
+    const cleanLabel = encodeURIComponent(label.trim() || 'Chrome Profile');
+    const cleanIssuer = encodeURIComponent(issuer.trim() || 'BrowserLock');
+    return `otpauth://totp/${cleanIssuer}:${cleanLabel}?secret=${cleanSecret}&issuer=${cleanIssuer}`;
   }
 
   // ---- TOTP Computation & Verification (RFC 6238) ----

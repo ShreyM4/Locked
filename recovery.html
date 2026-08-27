@@ -15,7 +15,7 @@
     <div class="recovery-card">
       <!-- Shield Key SVG icon -->
       <div class="recovery-icon" aria-hidden="true">
-        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="56" height="56">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
           <defs>
             <linearGradient id="recGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#6366f1"/>
@@ -24,73 +24,75 @@
           </defs>
           <path d="M32 4L8 16v16c0 14.4 10.24 27.84 24 32 13.76-4.16 24-17.6 24-32V16L32 4z"
                 fill="url(#recGrad)" opacity="0.9"/>
-          <!-- Key icon in center -->
           <circle cx="28" cy="30" r="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
           <path d="M32.5 34.5L42 44M39 41l2 2M41 39l2 2" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </div>
 
       <h1 class="recovery-title" id="view-title">Account Recovery</h1>
-      <p class="recovery-subtitle" id="view-subtitle">Select a recovery method to reset your Browser Lock PIN</p>
+      <p class="recovery-subtitle" id="view-subtitle">Select a recovery option to reset your PIN</p>
 
-      <!-- View 1: Recovery Method Selection -->
+      <!-- View 1: Recovery Verification -->
       <div id="methods-view" class="view-section active">
-        <!-- Option A: Windows Security -->
-        <div class="recovery-option" id="opt-windows">
-          <div class="option-header">
-            <div class="option-icon-box">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            </div>
-            <div class="option-text">
-              <div class="option-title">Windows Security</div>
-              <div class="option-desc">Verify using your Windows PIN or Password</div>
-            </div>
-          </div>
-          <button id="windows-verify-btn" class="primary-btn option-action-btn" type="button">
-            <span class="btn-text">Verify with Windows</span>
-            <span class="btn-spinner" id="win-spinner" aria-hidden="true"></span>
-          </button>
+        <!-- Segmented Tab Switcher -->
+        <div class="recovery-tabs">
+          <button id="tab-totp-btn" class="rec-tab-btn active" type="button">App Code</button>
+          <button id="tab-file-btn" class="rec-tab-btn" type="button">Saved Key / File</button>
         </div>
 
-        <div class="divider">
-          <span>OR</span>
-        </div>
-
-        <!-- Option B: Authenticator App (TOTP) -->
-        <div class="recovery-option" id="opt-totp">
-          <div class="option-header">
-            <div class="option-icon-box">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <div class="option-text">
-              <div class="option-title">Authenticator App (TOTP)</div>
-              <div class="option-desc">Enter 6-digit code from Google Authenticator</div>
-            </div>
-          </div>
-
-          <div class="totp-input-wrap">
+        <!-- Sub-view A: 6-Digit App Code -->
+        <div id="totp-method-area" class="method-sub-area active">
+          <div class="totp-field-group">
             <input
               type="text"
               id="totp-input"
-              class="totp-input"
+              class="totp-input-box"
               maxlength="6"
               inputmode="numeric"
               autocomplete="one-time-code"
               spellcheck="false"
+              autofocus
               placeholder="000000"
               aria-label="6-digit Authenticator code"
             >
-            <button id="totp-verify-btn" class="secondary-btn verify-sub-btn" type="button">
+            <button id="totp-verify-btn" class="primary-btn" type="button">
               <span class="btn-text">Verify Code</span>
               <span class="btn-spinner" id="totp-spinner" aria-hidden="true"></span>
             </button>
           </div>
+        </div>
+
+        <!-- Sub-view B: Saved Key File / Text -->
+        <div id="file-method-area" class="method-sub-area">
+          <input type="file" id="key-file-input" style="display: none;">
+          
+          <button id="upload-file-btn" class="upload-file-box" type="button">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span id="upload-box-text">Click to upload saved key file</span>
+          </button>
+
+          <div class="divider">
+            <span>OR PASTE KEY</span>
+          </div>
+
+          <input
+            type="text"
+            id="manual-key-input"
+            class="manual-key-input"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Paste manual Base32 key..."
+            aria-label="Manual key text"
+          >
+
+          <button id="key-verify-btn" class="primary-btn" type="button" style="margin-top: 10px;">
+            <span class="btn-text">Verify Key</span>
+            <span class="btn-spinner" id="key-spinner" aria-hidden="true"></span>
+          </button>
         </div>
 
         <button id="back-to-lock-btn" class="text-link-btn" type="button">
@@ -101,7 +103,7 @@
       <!-- View 2: Reset PIN (Visible only after successful verification) -->
       <div id="reset-pin-view" class="view-section">
         <div class="success-banner">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
             <polyline points="22 4 12 14.01 9 11.01"></polyline>
           </svg>
@@ -145,7 +147,7 @@
       <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
     </div>
 
-    <p class="footer-note">100% Local Verification • Zero External Data Transfer</p>
+    <p class="footer-note">100% Offline Local Verification</p>
   </div>
 
   <script src="totp.js"></script>

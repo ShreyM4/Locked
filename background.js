@@ -26,13 +26,14 @@ const LOCKOUT_TIERS = [
   { minAttempts: 5,  delaySec: 10 }
 ];
 
-const LOCK_WINDOW = { width: 420, height: 520 };
-const SETUP_WINDOW = { width: 480, height: 600 };
-const RECOVERY_WINDOW = { width: 420, height: 560 };
+const LOCK_WINDOW = { width: 400, height: 490 };
+const SETUP_WINDOW = { width: 440, height: 570 };
+const RECOVERY_WINDOW = { width: 400, height: 460 };
 
 // --------------- In-memory flags (not security state) ---------------
 
 let isCreatingLockWindow  = false;  // true while chrome.windows.create() is in-flight
+let isLockingInProgress   = false;  // true while lockBrowser() is processing multiple windows
 let lockEnforcementActive = false;  // true only when fully locked and ready to enforce
 let recreatingLockWindow  = false;  // mutex: prevents onRemoved re-entrant recreation
 let startupHandled        = false;  // ensures onStartup and IIFE don't both run lockBrowser
@@ -100,19 +101,23 @@ const DEFAULT_SETTINGS = Object.freeze({
 
 async function getStore() {
   const raw = await chrome.storage.local.get([
-    'lockState', 'pinData', 'totpSecret', 'settings',
+    'lockState', 'pinData', 'totpSecret', 'profileName', 'settings',
     'failedAttempts', 'lockoutUntil',
-    'lockWindowId', 'protectedWindowIds'
+    'lockWindowId', 'protectedWindowIds',
+    'coverTabIds', 'windowPrevStates'
   ]);
   return {
     lockState:          raw.lockState          || STATES.UNINITIALIZED,
     pinData:            raw.pinData            || null,
     totpSecret:         raw.totpSecret         || null,
+    profileName:        raw.profileName        || 'Chrome Profile',
     settings:           raw.settings           || { ...DEFAULT_SETTINGS },
     failedAttempts:     raw.failedAttempts     || 0,
     lockoutUntil:       raw.lockoutUntil       || 0,
     lockWindowId:       raw.lockWindowId       ?? null,
-    protectedWindowIds: raw.protectedWindowIds || []
+    protectedWindowIds: raw.protectedWindowIds || [],
+    coverTabIds:        raw.coverTabIds        || [],
+    windowPrevStates:   raw.windowPrevStates   || {}
   };
 }
 
@@ -211,27 +216,69 @@ async function createRecoveryWindow() {
 // ============================================================
 
 async function lockBrowser() {
+  // Prevent concurrent locking or event listener interference across multiple windows
+  isLockingInProgress = true;
+  lockEnforcementActive = false;
+
   const allWindows = await chrome.windows.getAll();
   const store = await getStore();
   const currentLockId = store.lockWindowId;
 
-  // Identify windows to protect (everything that isn't the lock window)
-  const protectedIds = allWindows
-    .filter(w => w.id !== currentLockId)
-    .map(w => w.id);
+  // Identify normal browser windows to protect (exclude popup lock windows)
+  const windowsToLock = allWindows.filter(w => w.id !== currentLockId && w.type === 'normal');
+  const protectedIds = windowsToLock.map(w => w.id);
 
-  await setStore({
-    lockState: STATES.LOCKED,
-    protectedWindowIds: protectedIds
-  });
+  const coverTabIds = [];
+  const windowPrevStates = {};
 
-  // Minimise every protected window
-  for (const id of protectedIds) {
-    try { await chrome.windows.update(id, { state: 'minimized' }); }
-    catch (_) { /* window may already be gone */ }
+  // Phase 1: Open the black cover tab on EVERY open window first and record states
+  for (const win of windowsToLock) {
+    windowPrevStates[win.id] = (win.state === 'fullscreen' || win.state === 'minimized') ? 'normal' : win.state;
+    try {
+      const coverTab = await chrome.tabs.create({
+        windowId: win.id,
+        url: chrome.runtime.getURL('cover.html'),
+        active: true
+      });
+      coverTabIds.push(coverTab.id);
+    } catch (_) {}
   }
 
-  // Create or focus the lock window
+  // Persist cover tabs and states immediately so tabs.onCreated never touches them
+  await setStore({
+    lockState: STATES.LOCKED,
+    protectedWindowIds: protectedIds,
+    coverTabIds: coverTabIds,
+    windowPrevStates: windowPrevStates
+  });
+
+  // Phase 2: For each window, enter fullscreen (to hide tab strip/UI), verify, and minimize
+  for (const win of windowsToLock) {
+    try {
+      await chrome.windows.update(win.id, { state: 'fullscreen', focused: true });
+
+      // Wait until window reports fullscreen state
+      let waited = 0;
+      while (waited < 250) {
+        try {
+          const check = await chrome.windows.get(win.id);
+          if (check.state === 'fullscreen') break;
+        } catch (_) { break; }
+        await new Promise(r => setTimeout(r, 25));
+        waited += 25;
+      }
+
+      // Allow DWM compositor sufficient time to capture the black fullscreen surface
+      await new Promise(r => setTimeout(r, 100));
+
+      // Minimize the window (Windows DWM Peek thumbnail now reliably retains the black frame)
+      await chrome.windows.update(win.id, { state: 'minimized' });
+    } catch (_) {
+      try { await chrome.windows.update(win.id, { state: 'minimized' }); } catch (_) {}
+    }
+  }
+
+  // Phase 3: Create or focus the lock popup window
   let lockExists = false;
   if (currentLockId != null) {
     try {
@@ -244,6 +291,7 @@ async function lockBrowser() {
     await createLockWindow();
   }
 
+  isLockingInProgress = false;
   lockEnforcementActive = true;
 }
 
@@ -259,30 +307,54 @@ async function unlockBrowser() {
 
   lockEnforcementActive = false;
 
-  // Restore protected windows
+  // 1. Close all temporary black cover tabs
+  const coverTabIds = store.coverTabIds || [];
+  for (const tabId of coverTabIds) {
+    try { await chrome.tabs.remove(tabId); }
+    catch (_) { /* already gone */ }
+  }
+
+  // Also query in case any cover.html tab was left over
+  try {
+    const leftoverTabs = await chrome.tabs.query({ url: chrome.runtime.getURL('cover.html') });
+    for (const t of leftoverTabs) {
+      try { await chrome.tabs.remove(t.id); } catch (_) {}
+    }
+  } catch (_) {}
+
+  // 2. Restore protected windows to their exact pre-lock state (e.g. 'maximized' or 'normal')
+  const prevStates = store.windowPrevStates || {};
   let firstRestoredId = null;
+
   for (const id of store.protectedWindowIds) {
+    const targetState = prevStates[id] || 'normal';
     try {
-      await chrome.windows.update(id, { state: 'normal' });
+      await chrome.windows.update(id, { state: targetState });
       if (firstRestoredId === null) firstRestoredId = id;
     } catch (_) { /* gone */ }
   }
 
-  // Focus the first restored window
+  // 3. Focus the first restored window
   if (firstRestoredId !== null) {
     try { await chrome.windows.update(firstRestoredId, { focused: true }); }
     catch (_) { /* ok */ }
   }
 
-  // Close lock window
+  // 4. Close lock window
   const lockId = store.lockWindowId;
-  await setStore({ lockWindowId: null, protectedWindowIds: [] });
+  await setStore({
+    lockWindowId: null,
+    protectedWindowIds: [],
+    coverTabIds: [],
+    windowPrevStates: {}
+  });
+
   if (lockId != null) {
     try { await chrome.windows.remove(lockId); }
     catch (_) { /* already gone */ }
   }
 
-  // Set up inactivity timer if configured
+  // 5. Set up inactivity timer if configured
   await setupInactivityAlarm();
 }
 
@@ -292,7 +364,7 @@ async function unlockBrowser() {
 
 async function enforceLock(focusedWindowId) {
   if (!lockEnforcementActive) return;
-  if (isCreatingLockWindow) return;  // don't interfere while lock window is being created
+  if (isCreatingLockWindow || isLockingInProgress) return;  // don't interfere while locking/creating windows
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
 
@@ -390,13 +462,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // --- Window focus changed ---
 chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (isLockingInProgress) return;
   enforceLock(windowId);
 });
 
 // --- New window created ---
 chrome.windows.onCreated.addListener(async (win) => {
-  // Always ignore windows WE are creating
-  if (isCreatingLockWindow) return;
+  // Always ignore windows WE are creating or during lock transition
+  if (isCreatingLockWindow || isLockingInProgress) return;
   if (!lockEnforcementActive) return;
 
   const store = await getStore();
@@ -415,12 +488,8 @@ chrome.windows.onCreated.addListener(async (win) => {
 });
 
 // --- Lock window removed ---
-// The user clicked X — respect that and close cleanly.
-// The browser stays LOCKED (all other windows remain minimized).
-// The lock screen reappears when the user clicks the extension icon
-// or tries to restore one of the minimized windows.
 chrome.windows.onRemoved.addListener(async (windowId) => {
-  if (isCreatingLockWindow) return;
+  if (isCreatingLockWindow || isLockingInProgress) return;
 
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
@@ -432,8 +501,8 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
 
 // --- New tab created ---
 chrome.tabs.onCreated.addListener(async (tab) => {
-  // Never remove tabs that belong to a window we are currently creating
-  if (isCreatingLockWindow) return;
+  // Never remove tabs that belong to a window we are currently creating or during locking
+  if (isCreatingLockWindow || isLockingInProgress) return;
   if (!lockEnforcementActive) return;
 
   const store = await getStore();
@@ -441,6 +510,9 @@ chrome.tabs.onCreated.addListener(async (tab) => {
 
   // Allow tabs in the lock window itself
   if (tab.windowId === store.lockWindowId) return;
+
+  // Allow temporary cover tabs
+  if (store.coverTabIds && store.coverTabIds.includes(tab.id)) return;
 
   // Remove tabs opened outside the lock window
   try { await chrome.tabs.remove(tab.id); }
@@ -527,31 +599,19 @@ async function handleMessage(msg, sender) {
       if (msg.totpSecret) {
         updates.totpSecret = msg.totpSecret;
       }
+      if (msg.profileName) {
+        updates.profileName = msg.profileName;
+      }
       await setStore(updates);
 
       // Close setup window → lock browser
       const setupWinId = sender.tab ? sender.tab.windowId : null;
-      await setStore({ lockWindowId: null });
-
-      const allWindows = await chrome.windows.getAll();
-      const protectedIds = allWindows
-        .filter(w => w.id !== setupWinId)
-        .map(w => w.id);
-
-      await setStore({ protectedWindowIds: protectedIds });
-
-      for (const id of protectedIds) {
-        try { await chrome.windows.update(id, { state: 'minimized' }); }
-        catch (_) { /* ok */ }
-      }
-
       if (setupWinId != null) {
         try { await chrome.windows.remove(setupWinId); }
         catch (_) { /* ok */ }
       }
 
-      await createLockWindow();
-      lockEnforcementActive = true;
+      await lockBrowser();
       return { success: true };
     }
 
@@ -694,6 +754,26 @@ async function handleMessage(msg, sender) {
       return { success: false, error: 'Invalid or expired code. Please try again.' };
     }
 
+    // ---- Verify Saved Recovery Key (File or Manual Text) ----
+    case 'VERIFY_RECOVERY_KEY': {
+      const store = await getStore();
+      if (!store.totpSecret) {
+        return { success: false, error: 'No recovery key is configured for this profile.' };
+      }
+
+      if (!msg.key || typeof msg.key !== 'string') {
+        return { success: false, error: 'Invalid key format.' };
+      }
+
+      const inputKey = msg.key.trim().replace(/\s+/g, '').toUpperCase();
+      const storedKey = store.totpSecret.trim().replace(/\s+/g, '').toUpperCase();
+
+      if (inputKey === storedKey) {
+        return { success: true };
+      }
+      return { success: false, error: 'The provided recovery key does not match this profile.' };
+    }
+
     // ---- Reset PIN after successful Recovery Verification ----
     case 'RESET_PIN_WITH_RECOVERY': {
       if (!msg.newPin || msg.newPin.length < 4) {
@@ -726,7 +806,18 @@ async function handleMessage(msg, sender) {
         await setStore({ totpSecret: secret });
       }
 
-      return { success: true, totpSecret: secret };
+      return {
+        success: true,
+        totpSecret: secret,
+        profileName: store.profileName || 'Chrome Profile'
+      };
+    }
+
+    case 'SET_PROFILE_NAME': {
+      if (msg.profileName) {
+        await setStore({ profileName: msg.profileName.trim() });
+      }
+      return { success: true };
     }
 
     // ---- Options / action: lock now ----

@@ -107,17 +107,8 @@
       
       <div class="shortcut-row" style="margin-top: 0; padding-top: 0; border-top: none;">
         <div class="shortcut-info">
-          <span class="toggle-name">Windows Security Verification</span>
-          <span class="toggle-desc">Verify with Windows PIN or Password via native helper</span>
-        </div>
-        <button id="test-windows-btn" class="action-btn-sm" type="button">Test Verification</button>
-      </div>
-      <div id="test-win-msg" class="feedback-msg" role="status"></div>
-
-      <div class="shortcut-row">
-        <div class="shortcut-info">
           <span class="toggle-name">Authenticator App (TOTP)</span>
-          <span class="toggle-desc">Google Authenticator or any 2FA app</span>
+          <span class="toggle-desc">Google Authenticator or any standard 2FA app</span>
         </div>
         <button id="toggle-totp-view-btn" class="action-btn-sm" type="button">View / Setup QR</button>
       </div>
@@ -128,6 +119,13 @@
         <button id="confirm-totp-auth-btn" class="action-btn" type="button" style="margin-bottom: 10px;">Reveal Authenticator Setup</button>
         
         <div id="totp-secret-area" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px auto 10px; max-width: 280px; padding: 5px 10px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; font-size: 11px; color: var(--accent-hover); font-weight: 600;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span id="options-account-email" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+          </div>
           <div id="options-qr-container" style="display: flex; justify-content: center; margin: 10px auto;"></div>
           <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Manual Key:</div>
           <code id="options-secret-code" style="font-family: monospace; font-size: 13px; color: var(--accent-hover); letter-spacing: 1px;"></code>

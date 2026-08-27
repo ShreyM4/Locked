@@ -1,6 +1,6 @@
 /* ============================================================
    Browser Lock — Setup Screen Styles
-   Shares design language with lock.css
+   Compact dark glassmorphism layout
    ============================================================ */
 
 *, *::before, *::after {
@@ -25,8 +25,8 @@
   --input-bg:      rgba(255, 255, 255, 0.06);
   --input-border:  rgba(255, 255, 255, 0.12);
   --input-focus:   rgba(99, 102, 241, 0.5);
-  --radius:        16px;
-  --transition:    0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius:        14px;
+  --transition:    0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html, body {
@@ -48,27 +48,27 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 24px;
+  min-height: 100vh;
+  padding: 16px;
 }
 
 .ambient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
+  filter: blur(70px);
+  opacity: 0.35;
   pointer-events: none;
   animation: float 12s ease-in-out infinite alternate;
 }
 
 .orb-1 {
-  width: 240px; height: 240px;
+  width: 200px; height: 200px;
   background: radial-gradient(circle, #6366f1, transparent 70%);
-  top: -50px; left: -30px;
+  top: -40px; left: -30px;
 }
 
 .orb-2 {
-  width: 180px; height: 180px;
+  width: 160px; height: 160px;
   background: radial-gradient(circle, #a78bfa, transparent 70%);
   bottom: -30px; right: -20px;
   animation-delay: -6s;
@@ -76,7 +76,7 @@ html, body {
 
 @keyframes float {
   0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(15px, 10px) scale(1.08); }
+  100% { transform: translate(12px, 8px) scale(1.06); }
 }
 
 /* ---- Card ---- */
@@ -88,52 +88,52 @@ html, body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 400px;
-  padding: 36px 32px 32px;
+  max-width: 380px;
+  padding: 22px 20px;
   background: var(--bg-card);
   border: 1px solid var(--card-border);
-  border-radius: 24px;
+  border-radius: 20px;
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.03) inset,
-    0 24px 64px rgba(0,0,0,0.4);
-  animation: cardIn 0.5s ease-out both;
+    0 20px 50px rgba(0,0,0,0.4);
+  animation: cardIn 0.4s ease-out both;
 }
 
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 
 /* ---- Icon ---- */
 
 .setup-icon {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 /* ---- Typography ---- */
 
 .setup-title {
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .setup-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
 .field-label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 10px;
-  text-align: left;
+  margin-bottom: 8px;
+  text-align: center;
   width: 100%;
 }
 
@@ -144,7 +144,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  animation: stepIn 0.35s ease-out;
+  animation: stepIn 0.3s ease-out;
 }
 
 .step.active {
@@ -152,23 +152,23 @@ html, body {
 }
 
 @keyframes stepIn {
-  from { opacity: 0; transform: translateX(12px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ---- PIN Input ---- */
 
 .pin-wrapper {
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .pin-input {
   width: 100%;
-  padding: 14px 20px;
-  font-size: 28px;
+  padding: 11px 16px;
+  font-size: 24px;
   font-family: inherit;
-  letter-spacing: 10px;
+  letter-spacing: 8px;
   text-align: center;
   color: var(--text-primary);
   background: var(--input-bg);
@@ -179,29 +179,9 @@ html, body {
   caret-color: var(--accent);
 }
 
-.pin-input::placeholder {
-  color: rgba(255,255,255,0.15);
-  letter-spacing: 8px;
-  font-size: 24px;
-}
-
 .pin-input:focus {
   border-color: var(--input-focus);
   box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.pin-input.shake {
-  animation: shake 0.45s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  15%      { transform: translateX(-8px); }
-  30%      { transform: translateX(7px); }
-  45%      { transform: translateX(-6px); }
-  60%      { transform: translateX(5px); }
-  75%      { transform: translateX(-3px); }
-  90%      { transform: translateX(2px); }
 }
 
 /* ---- PIN Strength ---- */
@@ -210,9 +190,9 @@ html, body {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  min-height: 20px;
+  gap: 8px;
+  margin-bottom: 14px;
+  min-height: 16px;
 }
 
 .strength-bar {
@@ -237,19 +217,44 @@ html, body {
   text-align: right;
 }
 
-/* ---- TOTP Setup Styles ---- */
+/* ---- Step 3 Elements ---- */
+
+.account-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 5px 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  color: var(--accent-hover);
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.account-email-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
 
 .qr-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 160px;
-  height: 160px;
-  margin: 12px auto;
+  width: 124px;
+  height: 124px;
+  margin: 4px auto 6px;
   background: #ffffff;
-  padding: 6px;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 5px;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .qr-box svg {
@@ -261,44 +266,79 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  margin: 6px 0 10px;
-  padding: 8px 12px;
+  margin-bottom: 8px;
+  padding: 5px 8px;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .secret-label {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-secondary);
 }
 
 .secret-key {
   font-family: monospace;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--accent-hover);
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   user-select: text;
 }
 
-.totp-note {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-align: center;
-  line-height: 1.4;
-  margin-bottom: 16px;
+.verify-code-wrap {
+  width: 100%;
+  margin-bottom: 12px;
 }
 
-/* ---- Buttons ---- */
+.verify-code-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 18px;
+  font-family: inherit;
+  letter-spacing: 6px;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.verify-code-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ---- Side-by-Side Buttons ---- */
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-sm-flex {
+  flex: 0 0 85px;
+  margin-top: 0 !important;
+}
+
+.btn-lg-flex {
+  flex: 1;
+}
 
 .primary-btn {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 14px 24px;
-  font-size: 15px;
+  padding: 11px 16px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   color: #fff;
@@ -306,16 +346,12 @@ html, body {
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px var(--accent-glow);
-}
-
-.primary-btn:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 .primary-btn:disabled {
@@ -325,31 +361,26 @@ html, body {
 
 .primary-btn .btn-spinner {
   display: none;
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border: 2px solid rgba(255,255,255,0.3);
   border-top-color: #fff;
   border-radius: 50%;
+  margin-left: 6px;
   animation: spin 0.6s linear infinite;
 }
 
 .primary-btn.loading .btn-spinner {
-  display: block;
+  display: inline-block;
 }
 
 @keyframes spin {
-  to { transform: translateY(-50%) rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 .secondary-btn {
-  width: 100%;
-  padding: 12px 24px;
-  margin-top: 10px;
-  font-size: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
   font-weight: 500;
   font-family: inherit;
   color: var(--text-secondary);
@@ -369,26 +400,24 @@ html, body {
 
 .error-msg {
   width: 100%;
-  margin-top: 16px;
-  font-size: 13px;
+  margin-top: 10px;
+  font-size: 11px;
   color: var(--error);
   text-align: center;
-  min-height: 20px;
-}
-
-.error-msg:empty {
-  opacity: 0;
+  min-height: 0;
+  display: none;
 }
 
 .error-msg.visible {
-  padding: 10px 14px;
+  display: block;
+  padding: 6px 10px;
   background: var(--error-bg);
-  border-radius: 10px;
-  animation: fadeIn 0.3s ease-out;
+  border-radius: 8px;
+  animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; transform: translateY(-3px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -396,13 +425,22 @@ html, body {
 
 .footer-note {
   position: absolute;
-  bottom: 16px;
-  font-size: 11px;
+  bottom: 8px;
+  font-size: 10px;
   color: rgba(255,255,255,0.2);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
-::selection {
-  background: var(--accent);
-  color: #fff;
+.shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-8px); }
+  30%      { transform: translateX(7px); }
+  45%      { transform: translateX(-6px); }
+  60%      { transform: translateX(5px); }
+  75%      { transform: translateX(-3px); }
+  90%      { transform: translateX(2px); }
 }

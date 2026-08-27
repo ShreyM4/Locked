@@ -3,229 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — Browser Lock</title>
-  <link rel="icon" type="image/png" href="icons/icon32.png">
+  <title>Privacy Policy - Browser Lock</title>
   <style>
-    :root {
-      --bg-page: #0b0c16;
-      --bg-card: rgba(255, 255, 255, 0.04);
-      --border: rgba(255, 255, 255, 0.08);
-      --text-primary: #f0f0f5;
-      --text-secondary: #9898b0;
-      --accent: #6366f1;
-      --accent-hover: #818cf8;
-      --success: #34d399;
-    }
-
-    *, *::before, *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-page);
-      color: var(--text-primary);
+      font-family: Arial, sans-serif;
       line-height: 1.6;
-      padding: 40px 20px;
+      color: #333;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
     }
-
-    .container {
-      max-width: 760px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .logo {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
-    }
-
     h1 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #ffffff, #a5b4fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 28px;
+      margin-bottom: 5px;
     }
-
-    .effective-date {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .badge-pledge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 14px;
-      padding: 6px 14px;
-      background: rgba(52, 211, 153, 0.1);
-      border: 1px solid rgba(52, 211, 153, 0.25);
-      border-radius: 999px;
-      color: var(--success);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .content-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 28px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-      margin-bottom: 30px;
-    }
-
     h2 {
       font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-      margin-top: 28px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      margin-top: 25px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
     }
-
-    h2:first-of-type {
-      margin-top: 0;
-    }
-
-    p {
-      color: var(--text-secondary);
+    p, li {
       font-size: 15px;
-      margin-bottom: 16px;
     }
-
     ul {
-      list-style-type: none;
-      padding-left: 0;
-      margin-bottom: 16px;
+      margin-top: 5px;
+      padding-left: 25px;
     }
-
-    li {
-      position: relative;
-      padding-left: 24px;
-      color: var(--text-secondary);
+    .date {
+      color: #666;
       font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    li::before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: var(--accent-hover);
-      font-weight: bold;
-    }
-
-    .highlight-box {
-      background: rgba(99, 102, 241, 0.08);
-      border-left: 3px solid var(--accent);
-      padding: 14px 16px;
-      border-radius: 0 10px 10px 0;
-      margin: 18px 0;
-    }
-
-    .highlight-box p {
-      color: var(--text-primary);
-      font-size: 14px;
-      margin-bottom: 0;
-    }
-
-    footer {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-    }
-
-    a {
-      color: var(--accent-hover);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <img src="logo.svg" alt="Browser Lock Logo" class="logo">
-      <h1>Privacy Policy for Browser Lock</h1>
-      <p class="effective-date">Last updated: August 27, 2026</p>
-      <div class="badge-pledge">
-        🔒 100% Offline • Zero Data Collection • Open Source
-      </div>
-    </header>
 
-    <main class="content-card">
-      <h2>1. Overview</h2>
-      <p>
-        <strong>Browser Lock</strong> ("we", "our", or "the extension") is a privacy-first, open-source security extension designed to password-protect your Google Chrome profile session. 
-      </p>
-      <p>
-        Your privacy is our core principle. Browser Lock is engineered with a strict <strong>Zero-Knowledge &amp; Zero-Telemetry Architecture</strong>. We do not operate any external tracking servers, analytics endpoints, or remote databases.
-      </p>
+  <h1>PRIVACY NOTICE</h1>
+  <p class="date">Last updated: August 27, 2026</p>
 
-      <h2>2. What Data We Collect</h2>
-      <div class="highlight-box">
-        <p><strong>We collect, store, transmit, and sell absolutely NO personal data or browsing information.</strong></p>
-      </div>
-      <p>Specifically:</p>
-      <ul>
-        <li><strong>No Browsing Activity:</strong> We cannot see, track, or access your browsing history, visited URLs, web page contents, downloads, or bookmarks.</li>
-        <li><strong>No Network Communication:</strong> The extension makes <strong>zero external network requests</strong>. Everything executes completely offline within your browser's local sandbox.</li>
-        <li><strong>No Analytics or Telemetry:</strong> No tracking cookies, diagnostic beacons, or behavioral identifiers are used.</li>
-      </ul>
+  <p>
+    This privacy notice for <strong>Browser Lock</strong> ("we", "us", or "our") describes how and why we might collect, store, use, and/or process your information when you use our Chrome Extension.
+  </p>
 
-      <h2>3. Local Data Storage &amp; Security</h2>
-      <p>
-        All authentication credentials and security settings remain exclusively on your physical device inside Chrome's isolated local extension storage (<code>chrome.storage.local</code>):
-      </p>
-      <ul>
-        <li><strong>PIN Storage:</strong> Your PIN is never saved in plaintext. It is cryptographically salted (16 bytes random salt) and hashed using <strong>PBKDF2-SHA256 with 600,000 iterations</strong> via the native Web Crypto API.</li>
-        <li><strong>2FA Recovery Secret:</strong> The TOTP secret key is generated locally on your machine using cryptographically secure random values and is verified entirely offline according to RFC 6238 standards.</li>
-      </ul>
+  <h2>1. WHAT INFORMATION DO WE COLLECT?</h2>
+  <p><strong>In Short:</strong> We do not collect, transmit, sell, or share any personal information or browsing data.</p>
+  <p>Browser Lock operates 100% locally and offline in your browser:</p>
+  <ul>
+    <li><strong>No Browsing History:</strong> We do not collect or monitor your visited websites, URLs, search queries, or page content.</li>
+    <li><strong>No Personal Identifiers:</strong> We do not collect names, addresses, phone numbers, or device identifiers.</li>
+    <li><strong>No Remote Communication:</strong> The extension contains no tracking code, telemetry, analytics, or external server connections.</li>
+  </ul>
 
-      <h2>4. Chrome Permissions Transparency</h2>
-      <p>Browser Lock requests only the minimum permissions necessary for its lock screen and recovery features:</p>
-      <ul>
-        <li><code>storage</code>: To persist your encrypted PIN hash, TOTP recovery key, and preferences locally.</li>
-        <li><code>alarms</code>: To schedule brute-force lockout cooldowns and auto-lock inactivity timers.</li>
-        <li><code>identity</code> &amp; <code>identity.email</code>: Used strictly in a local context to retrieve your current Chrome profile's Google account email, allowing Google Authenticator to display a clear label (e.g. <code>BrowserLock (user@gmail.com)</code>). This email is never transmitted or shared.</li>
-        <li><code>idle</code> (Optional): Used only if you choose to enable the inactivity auto-lock feature in settings to detect when your computer is idle.</li>
-      </ul>
+  <h2>2. HOW IS YOUR DATA STORED?</h2>
+  <p>All data created by the extension is stored strictly on your local machine using Chrome's local storage API (<code>chrome.storage.local</code>):</p>
+  <ul>
+    <li><strong>PIN Data:</strong> Your PIN is never stored in plaintext. It is cryptographically salted and hashed using PBKDF2-SHA256 (600,000 iterations) directly on your device.</li>
+    <li><strong>2FA Secret Key:</strong> The TOTP recovery key is generated randomly on your device and validated locally according to standard RFC 6238 protocols.</li>
+  </ul>
 
-      <h2>5. Open Source Transparency</h2>
-      <p>
-        Browser Lock is free, open-source software under the MIT License. The complete source code is publicly auditable on GitHub, allowing anyone to verify our offline operation and cryptographic integrity.
-      </p>
+  <h2>3. WHAT PERMISSIONS DO WE USE AND WHY?</h2>
+  <p>The extension requires the following browser permissions solely to provide its lock screen functionality:</p>
+  <ul>
+    <li><strong>storage:</strong> Used to save your encrypted PIN hash, recovery secret, and preferences on your device.</li>
+    <li><strong>alarms:</strong> Used to handle lockout delay timers and auto-lock timers.</li>
+    <li><strong>identity &amp; identity.email:</strong> Used strictly to identify your signed-in Google account email locally so that your Google Authenticator app displays an identifiable profile label. This information is never transmitted anywhere.</li>
+    <li><strong>idle (optional):</strong> Used only if you choose to enable the inactivity auto-lock feature in Settings.</li>
+  </ul>
 
-      <h2>6. Contact &amp; Inquiries</h2>
-      <p>
-        If you have any questions, feedback, or security inquiries regarding this Privacy Policy or the extension, please open an issue on our GitHub repository.
-      </p>
-    </main>
+  <h2>4. THIRD-PARTY DISCLOSURE</h2>
+  <p>
+    We do not sell, trade, or transfer your information to outside parties. No data leaves your local computer sandbox.
+  </p>
 
-    <footer>
-      <p>&copy; 2026 Browser Lock. Free and Open Source software.</p>
-    </footer>
-  </div>
+  <h2>5. OPEN SOURCE &amp; VERIFICATION</h2>
+  <p>
+    Browser Lock is an open-source project. The source code is publicly available on GitHub for independent security and privacy audits.
+  </p>
+
+  <h2>6. CONTACT US</h2>
+  <p>
+    If you have questions or comments about this notice, you may contact us by opening an issue on our GitHub repository.
+  </p>
+
 </body>
 </html>

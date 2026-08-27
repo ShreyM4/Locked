@@ -30,6 +30,12 @@
       margin-top: 5px;
       padding-left: 25px;
     }
+    code {
+      background: #f2f2f2;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 14px;
+    }
     .date {
       color: #666;
       font-size: 14px;
@@ -52,38 +58,60 @@
   <ul>
     <li><strong>No Browsing History:</strong> We do not collect or monitor your visited websites, URLs, search queries, or page content.</li>
     <li><strong>No Personal Identifiers:</strong> We do not collect names, addresses, phone numbers, or device identifiers.</li>
-    <li><strong>No Remote Communication:</strong> The extension contains no tracking code, telemetry, analytics, or external server connections.</li>
+    <li><strong>No Remote Communication:</strong> The extension makes zero external network connections and contains no tracking code, analytics, or telemetry of any kind.</li>
+    <li><strong>No Accounts:</strong> The extension does not require you to sign up, log in, or create any account with us.</li>
   </ul>
 
   <h2>2. HOW IS YOUR DATA STORED?</h2>
-  <p>All data created by the extension is stored strictly on your local machine using Chrome's local storage API (<code>chrome.storage.local</code>):</p>
+  <p>All data created by the extension is stored strictly on your local machine, inside Chrome's local storage sandbox (<code>chrome.storage.local</code>). Nothing is ever synced to a server we control.</p>
   <ul>
-    <li><strong>PIN Data:</strong> Your PIN is never stored in plaintext. It is cryptographically salted and hashed using PBKDF2-SHA256 (600,000 iterations) directly on your device.</li>
-    <li><strong>2FA Secret Key:</strong> The TOTP recovery key is generated randomly on your device and validated locally according to standard RFC 6238 protocols.</li>
+    <li><strong>PIN Data:</strong> Your PIN is never stored in plaintext. It is cryptographically salted (unique 16-byte random salt) and hashed using PBKDF2-SHA256 with 600,000 iterations, directly on your device.</li>
+    <li><strong>2FA Recovery Secret:</strong> The TOTP secret is generated randomly on your device and validated locally according to the standard offline RFC 6238 protocol, compatible with apps like Google Authenticator, Authy, Aegis, and 1Password.</li>
+    <li><strong>Manual Backups:</strong> If you choose to export a binary recovery key file or copy your Base32 secret, that file is saved directly to a location you choose on your own disk. We have no access to it.</li>
+    <li><strong>Preferences:</strong> Your shortcut, auto-lock timeout, and other settings are also stored locally.</li>
   </ul>
 
   <h2>3. WHAT PERMISSIONS DO WE USE AND WHY?</h2>
   <p>The extension requires the following browser permissions solely to provide its lock screen functionality:</p>
   <ul>
     <li><strong>storage:</strong> Used to save your encrypted PIN hash, recovery secret, and preferences on your device.</li>
-    <li><strong>alarms:</strong> Used to handle lockout delay timers and auto-lock timers.</li>
-    <li><strong>identity &amp; identity.email:</strong> Used strictly to identify your signed-in Google account email locally so that your Google Authenticator app displays an identifiable profile label. This information is never transmitted anywhere.</li>
+    <li><strong>alarms:</strong> Used to handle brute-force lockout delay timers and inactivity auto-lock timers.</li>
+    <li><strong>identity &amp; identity.email:</strong> Used strictly to read your local Chrome profile's email address so that your authenticator app can display an identifiable label (e.g. "Browser Lock — you@example.com"). This information is used locally only and is never transmitted anywhere.</li>
     <li><strong>idle (optional):</strong> Used only if you choose to enable the inactivity auto-lock feature in Settings.</li>
   </ul>
 
   <h2>4. THIRD-PARTY DISCLOSURE</h2>
   <p>
-    We do not sell, trade, or transfer your information to outside parties. No data leaves your local computer sandbox.
+    We do not sell, trade, rent, or transfer your information to outside parties, because no such information ever reaches us in the first place. No data leaves your local computer sandbox.
   </p>
 
-  <h2>5. OPEN SOURCE &amp; VERIFICATION</h2>
+  <h2>5. DATA RETENTION &amp; DELETION</h2>
   <p>
-    Browser Lock is an open-source project. The source code is publicly available on GitHub for independent security and privacy audits.
+    Data is retained locally for as long as the extension is installed. Uninstalling Browser Lock from <code>chrome://extensions</code> permanently deletes its local storage, including your PIN hash, salt, TOTP secret, and settings. Any manually exported backup files remain on your disk until you delete them yourself.
   </p>
 
-  <h2>6. CONTACT US</h2>
+  <h2>6. OPEN SOURCE &amp; VERIFICATION</h2>
   <p>
-    If you have questions or comments about this notice, you may contact us by opening an issue on our GitHub repository.
+    Browser Lock is free, open-source software released under the <a href="https://github.com/ShreyM4/Locked/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>. The full source code is publicly available on GitHub at <a href="https://github.com/ShreyM4/Locked" target="_blank" rel="noopener noreferrer">github.com/ShreyM4/Locked</a> for independent security and privacy audits, so you can verify every claim in this notice for yourself.
+  </p>
+
+  <h2>7. CHILDREN'S PRIVACY</h2>
+  <p>
+    Browser Lock does not knowingly collect information from anyone, including children, as it collects no information from any user under any circumstance.
+  </p>
+
+  <h2>8. CHANGES TO THIS NOTICE</h2>
+  <p>
+    We may update this notice from time to time. The updated version will be indicated by a revised "Last updated" date at the top of this page.
+  </p>
+
+  <h2>9. CONTACT US</h2>
+  <p>
+    If you have questions or comments about this notice, you may contact us by opening an <a href="https://github.com/ShreyM4/Locked/issues" target="_blank" rel="noopener noreferrer">issue on our GitHub repository</a>.
+  </p>
+
+  <p>
+    <a href="https://github.com/ShreyM4/Locked" target="_blank" rel="noopener noreferrer">← Back to Browser Lock on GitHub</a>
   </p>
 
 </body>

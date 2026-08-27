@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Browser Lock",
+  "name": "Simple Lock | Offline Lock for your Browser",
+  "short_name": "Simple Lock",
   "version": "1.0.0",
-  "description": "Privacy-first browser profile lock screen. No tracking, no analytics, no external connections. Everything stays local.",
+  "description": "Protect your browser with a PIN and 2FA lock. 100% offline, open-source, and privacy-focused with zero tracking.",
 
   "permissions": [
     "storage",
@@ -20,7 +21,7 @@
   },
 
   "action": {
-    "default_title": "Browser Lock",
+    "default_title": "Simple Lock",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

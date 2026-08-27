@@ -205,7 +205,7 @@
   function renderOptionsQR(accountLabel) {
     if (!revealedSecret || !window.TOTPEngine) return;
     const label = accountLabel || 'Chrome Profile';
-    const otpUrl = TOTPEngine.getOtpAuthUrl(revealedSecret, label, 'BrowserLock');
+    const otpUrl = TOTPEngine.getOtpAuthUrl(revealedSecret, label, 'SimpleLock');
     optionsQrBox.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 140);
     optionsSecretCode.textContent = TOTPEngine.formatSecret(revealedSecret);
   }

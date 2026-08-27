@@ -155,7 +155,7 @@
   function renderQRCode(label) {
     if (!generatedTotpSecret || !window.TOTPEngine) return;
     const account = label || detectedProfileEmail || 'Chrome Profile';
-    const otpUrl = TOTPEngine.getOtpAuthUrl(generatedTotpSecret, account, 'BrowserLock');
+    const otpUrl = TOTPEngine.getOtpAuthUrl(generatedTotpSecret, account, 'SimpleLock');
     qrContainer.innerHTML = TOTPEngine.generateQRCodeSVG(otpUrl, 114);
     secretKeyText.textContent = TOTPEngine.formatSecret(generatedTotpSecret);
   }

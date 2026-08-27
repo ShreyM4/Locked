@@ -1,9 +1,9 @@
-# 🔒 Browser Lock — Privacy-First Chrome Profile Security
+# 🔒 Simple Lock — Privacy-First Chrome Profile Security
 
 <div align="center">
-  <img src="logo.svg" alt="Browser Lock Logo" width="120" height="120">
-  <h3>Modern, Airtight, 100% Offline Profile Lock for Google Chrome</h3>
-  <p>Protect your tabs, history, and active session with military-grade PBKDF2 encryption and offline Google Authenticator 2FA recovery.</p>
+  <img src="logo.svg" alt="Simple Lock Logo" width="120" height="120">
+  <h3>Simple, Airtight, 100% Offline Profile Lock for Google Chrome</h3>
+  <p>Protect your browser with a PIN and 2FA lock. 100% offline, open-source, and privacy-focused with zero tracking.</p>
 
   <p>
     <img src="https://img.shields.io/badge/Manifest-V3-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
@@ -36,12 +36,12 @@ Install directly from the [Chrome Web Store](https://chrome.google.com/webstore)
 ### Option 2: Load Unpacked (Developer Mode)
 1. Clone or download this repository:
    ```bash
-   git clone https://github.com/your-username/browser-lock.git
+   git clone https://github.com/your-username/simple-lock.git
    ```
 2. Open Google Chrome and navigate to `chrome://extensions`.
 3. Enable **Developer mode** toggle in the top right corner.
 4. Click **Load unpacked** and select the root folder of this repository.
-5. The Browser Lock setup screen will open immediately.
+5. The Simple Lock setup screen will open immediately.
 
 ---
 
@@ -59,20 +59,20 @@ Install directly from the [Chrome Web Store](https://chrome.google.com/webstore)
 
 ## 🔑 Permissions Breakdown
 
-Browser Lock follows the principle of least privilege:
+Simple Lock follows the principle of least privilege:
 
 | Permission | Purpose |
 |---|---|
 | `storage` | Stores PIN hash, salt, TOTP secret, and user settings strictly in local isolated extension storage. |
 | `alarms` | Schedules brute-force lockout and inactivity auto-lock timers. |
-| `identity` / `identity.email` | Reads the local profile's signed-in Google account email to automatically label the Google Authenticator entry (e.g. `BrowserLock (user@gmail.com)`). Never sent to any server. |
+| `identity` / `identity.email` | Reads the local profile's signed-in Google account email to automatically label the Google Authenticator entry (e.g. `SimpleLock (user@gmail.com)`). Never sent to any server. |
 | `idle` *(Optional)* | Detects system idle state if the user enables the inactivity timer in Settings. |
 
 ---
 
 ## 📄 Privacy Policy
 
-Browser Lock is designed with strict **zero-knowledge privacy**:
+Simple Lock is designed with strict **zero-knowledge privacy**:
 - No personal data, browsing history, cookies, or credentials are ever collected or transmitted.
 - Read our full [Privacy Policy](privacy.html).
 

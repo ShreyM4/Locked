@@ -63,10 +63,10 @@
     return secret.match(/.{1,4}/g)?.join(' ') || secret;
   }
 
-  function getOtpAuthUrl(secret, label = 'Chrome Profile', issuer = 'BrowserLock') {
-    const cleanSecret = secret.replace(/\s+/g, '').toUpperCase();
+  function getOtpAuthUrl(secret, label = 'Chrome Profile', issuer = 'SimpleLock') {
+    const cleanSecret = (secret || '').trim().replace(/\s+/g, '').toUpperCase();
     const cleanLabel = encodeURIComponent(label.trim() || 'Chrome Profile');
-    const cleanIssuer = encodeURIComponent(issuer.trim() || 'BrowserLock');
+    const cleanIssuer = encodeURIComponent(issuer.trim() || 'SimpleLock');
     return `otpauth://totp/${cleanIssuer}:${cleanLabel}?secret=${cleanSecret}&issuer=${cleanIssuer}`;
   }
 

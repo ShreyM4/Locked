@@ -1,11 +1,7 @@
-// ============================================================
-// Browser Lock — Lock Screen Logic
-// ============================================================
-
 'use strict';
 
 (function () {
-  // DOM refs
+  
   const pinInput   = document.getElementById('pin-input');
   const unlockBtn  = document.getElementById('unlock-btn');
   const errorMsg   = document.getElementById('error-msg');
@@ -15,58 +11,58 @@
   let isSubmitting = false;
   let lockoutTimer = null;
 
-  // ---- Initialise ----
+  
 
   async function init() {
     pinInput.focus();
 
-    // Check for existing lockout
+    
     try {
       const state = await sendMessage({ type: 'GET_STATE' });
       if (state.lockoutRemaining > 0) {
         startLockoutCountdown(state.lockoutRemaining);
       }
-    } catch (_) { /* ok */ }
+    } catch (_) {  }
   }
 
-  // ---- PIN input filtering (digits only) ----
+  
 
   pinInput.addEventListener('input', () => {
     pinInput.value = pinInput.value.replace(/[^0-9]/g, '');
   });
 
   pinInput.addEventListener('keydown', (e) => {
-    // Allow: backspace, delete, tab, escape (no bypass), arrows, home, end
+    
     const allowed = [
       'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight',
       'Home', 'End'
     ];
     if (allowed.includes(e.key)) return;
 
-    // Allow Ctrl+A, Ctrl+V, Ctrl+C
+    
     if ((e.ctrlKey || e.metaKey) && ['a', 'v', 'c', 'x'].includes(e.key.toLowerCase())) return;
 
-    // Allow digits
+    
     if (/^[0-9]$/.test(e.key)) return;
 
-    // Enter → submit
+    
     if (e.key === 'Enter') {
       e.preventDefault();
       attemptUnlock();
       return;
     }
 
-    // Block everything else
+    
     e.preventDefault();
   });
 
-  // ---- Unlock button ----
+  
 
   unlockBtn.addEventListener('click', () => {
     attemptUnlock();
   });
 
-  // ---- Forgot PIN button ----
+  
 
   const forgotPinBtn = document.getElementById('forgot-pin-btn');
   if (forgotPinBtn) {
@@ -75,7 +71,7 @@
     });
   }
 
-  // ---- Core unlock attempt ----
+  
 
   async function attemptUnlock() {
     if (isSubmitting) return;
@@ -95,13 +91,13 @@
       const result = await sendMessage({ type: 'VERIFY_PIN', pin });
 
       if (result.success) {
-        // Unlock succeeds — the background will close this window
+        
         unlockBtn.disabled = true;
         pinInput.disabled = true;
         return;
       }
 
-      // Wrong PIN
+      
       pinInput.value = '';
       pinInput.focus();
       shakeInput();
@@ -156,7 +152,7 @@
     lockoutMsg.classList.add('visible');
   }
 
-  // ---- UI helpers ----
+  
 
   function showError(msg) {
     errorMsg.textContent = msg;
@@ -170,7 +166,7 @@
 
   function shakeInput() {
     pinInput.classList.remove('shake');
-    // Force reflow to restart animation
+    
     void pinInput.offsetWidth;
     pinInput.classList.add('shake');
   }
@@ -185,7 +181,7 @@
     }
   }
 
-  // ---- Messaging ----
+  
 
   function sendMessage(msg) {
     return new Promise((resolve, reject) => {
@@ -199,25 +195,25 @@
     });
   }
 
-  // ---- Prevent context menu ----
+  
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // ---- Prevent navigation shortcuts ----
+  
   document.addEventListener('keydown', (e) => {
-    // Block F5, Ctrl+R (reload — not a bypass but prevents confusion)
+    
     if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r')) {
       e.preventDefault();
     }
-    // Block Ctrl+L (address bar — popup has none, but just in case)
+    
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
       e.preventDefault();
     }
-    // Block Alt+Home (home page)
+    
     if (e.altKey && e.key === 'Home') {
       e.preventDefault();
     }
   });
 
-  // ---- Start ----
+  
   init();
 })();

@@ -1,35 +1,30 @@
-// ============================================================
-// Browser Lock — Account Recovery Logic
-// Offline TOTP & Saved Key File / Text Verification & PIN Reset
-// ============================================================
-
 'use strict';
 
 (function () {
-  // DOM Elements - Views & Titles
+  
   const methodsView      = document.getElementById('methods-view');
   const resetPinView     = document.getElementById('reset-pin-view');
   const viewTitle        = document.getElementById('view-title');
   const viewSubtitle     = document.getElementById('view-subtitle');
 
-  // Tabs & Sub-views
+  
   const tabTotpBtn       = document.getElementById('tab-totp-btn');
   const tabFileBtn       = document.getElementById('tab-file-btn');
   const totpMethodArea   = document.getElementById('totp-method-area');
   const fileMethodArea   = document.getElementById('file-method-area');
 
-  // TOTP Elements
+  
   const totpInput        = document.getElementById('totp-input');
   const totpVerifyBtn    = document.getElementById('totp-verify-btn');
   
-  // File & Key Elements
+  
   const keyFileInput     = document.getElementById('key-file-input');
   const uploadFileBtn    = document.getElementById('upload-file-btn');
   const uploadBoxText    = document.getElementById('upload-box-text');
   const manualKeyInput   = document.getElementById('manual-key-input');
   const keyVerifyBtn     = document.getElementById('key-verify-btn');
 
-  // Navigation & Reset Elements
+  
   const backToLockBtn    = document.getElementById('back-to-lock-btn');
   const newPinInput      = document.getElementById('new-pin');
   const confirmPinInput  = document.getElementById('confirm-pin');
@@ -38,7 +33,7 @@
 
   let isSubmitting = false;
 
-  // ---- Tab Switching ----
+  
 
   tabTotpBtn.addEventListener('click', () => {
     tabTotpBtn.classList.add('active');
@@ -58,7 +53,7 @@
     manualKeyInput.focus();
   });
 
-  // ---- Digits only input filter ----
+  
 
   function filterDigits(input) {
     input.addEventListener('input', () => {
@@ -77,7 +72,7 @@
     }
   });
 
-  // ---- 1. Authenticator App (TOTP) Verification ----
+  
 
   totpVerifyBtn.addEventListener('click', () => attemptTOTPVerify());
 
@@ -134,7 +129,7 @@
     clearError();
 
     try {
-      // First read as ArrayBuffer for binary key files
+      
       const buffer = await readFileAsArrayBuffer(file);
       const bytes = new Uint8Array(buffer);
 
@@ -144,7 +139,7 @@
       if (bytes.length === 20 && window.TOTPEngine) {
         keyBase32 = TOTPEngine.base32Encode(bytes);
       } else {
-        // Fallback: try parsing as text/Base32 string
+        
         const text = new TextDecoder('utf-8').decode(bytes).trim();
         keyBase32 = text.replace(/[^A-Z2-7]/gi, '').toUpperCase();
       }
@@ -227,7 +222,7 @@
     }
   }
 
-  // ---- Transition to Create New PIN ----
+  
 
   function transitionToResetPIN() {
     clearError();
@@ -238,7 +233,7 @@
     newPinInput.focus();
   }
 
-  // ---- Save New PIN ----
+  
 
   saveNewPinBtn.addEventListener('click', () => attemptSaveNewPIN());
 
@@ -292,13 +287,13 @@
     }
   }
 
-  // ---- Back to Lock Screen ----
+  
 
   backToLockBtn.addEventListener('click', async () => {
     await sendMessage({ type: 'OPEN_LOCK_WINDOW' });
   });
 
-  // ---- Helpers ----
+  
 
   function showError(msg) {
     errorMsg.textContent = msg;
@@ -338,7 +333,7 @@
     });
   }
 
-  // Prevent context menu & reload
+  
   document.addEventListener('contextmenu', (e) => e.preventDefault());
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r')) {

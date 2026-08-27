@@ -1,9 +1,3 @@
-// ============================================================
-// Browser Lock — Offline TOTP & QR Code Engine (RFC 6238 / RFC 4226)
-// 100% offline, zero network requests, zero external dependencies.
-// Tested & 100% Compatible with Google Authenticator.
-// ============================================================
-
 'use strict';
 
 (function (root, factory) {
@@ -18,7 +12,7 @@
 
   const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-  // ---- Base32 Encoding & Decoding ----
+  
 
   function base32Encode(buffer) {
     let bits = 0;
@@ -76,7 +70,7 @@
     return `otpauth://totp/${cleanIssuer}:${cleanLabel}?secret=${cleanSecret}&issuer=${cleanIssuer}`;
   }
 
-  // ---- TOTP Computation & Verification (RFC 6238) ----
+  
 
   async function calculateOTP(secretBase32, timeStep) {
     const keyBytes = base32Decode(secretBase32);
@@ -98,7 +92,7 @@
     const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBuf);
     const sigBytes = new Uint8Array(signature);
 
-    // Dynamic truncation (RFC 4226)
+    
     const offset = sigBytes[19] & 0x0f;
     const binary =
       ((sigBytes[offset] & 0x7f) << 24) |

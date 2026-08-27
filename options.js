@@ -1,11 +1,7 @@
-// ============================================================
-// Browser Lock — Options Page Logic
-// ============================================================
-
 'use strict';
 
 (function () {
-  // DOM refs
+  
   const lockOnStartup    = document.getElementById('lock-on-startup');
   const inactivitySelect = document.getElementById('inactivity-timeout');
   const idleNotice       = document.getElementById('idle-permission-notice');
@@ -24,7 +20,7 @@
   const resetBtn         = document.getElementById('reset-btn');
   const resetMsg         = document.getElementById('reset-msg');
 
-  // ---- Filter PIN inputs to digits only ----
+  
 
   function filterDigits(input) {
     input.addEventListener('input', () => {
@@ -44,11 +40,11 @@
         inactivitySelect.value = String(state.settings.inactivityTimeout || 0);
       }
 
-      // Check if idle permission is needed
+      
       if (state.settings && state.settings.inactivityTimeout > 0) {
         await checkIdlePermission();
       }
-    } catch (_) { /* ok */ }
+    } catch (_) {  }
   }
 
   async function checkIdlePermission() {
@@ -64,7 +60,7 @@
     }
   }
 
-  // ---- Lock on startup toggle ----
+  
 
   lockOnStartup.addEventListener('change', async () => {
     await sendMessage({
@@ -73,7 +69,7 @@
     });
   });
 
-  // ---- Inactivity timeout ----
+  
 
   inactivitySelect.addEventListener('change', async () => {
     const timeout = parseInt(inactivitySelect.value);
@@ -90,33 +86,33 @@
     }
   });
 
-  // ---- Grant idle permission ----
+  
 
   grantIdleBtn.addEventListener('click', async () => {
     try {
       const granted = await chrome.permissions.request({ permissions: ['idle'] });
       if (granted) {
         idleNotice.style.display = 'none';
-        // Re-apply the setting now that we have permission
+        
         await sendMessage({
           type: 'UPDATE_SETTINGS',
           settings: { inactivityTimeout: parseInt(inactivitySelect.value) }
         });
       }
     } catch (err) {
-      // Permission request failed — user denied
+      
     }
   });
 
-  // ---- Lock now ----
+  
 
   lockNowBtn.addEventListener('click', async () => {
     lockNowBtn.disabled = true;
     await sendMessage({ type: 'LOCK_NOW' });
-    // The background will lock the browser — this tab will be minimised
+    
   });
 
-  // ---- Change PIN ----
+  
 
   changePinBtn.addEventListener('click', async () => {
     const current = currentPinInput.value.trim();
@@ -162,7 +158,7 @@
     }
   });
 
-  // ---- Authenticator App (TOTP) View / Setup ----
+  
 
   const toggleTotpBtn    = document.getElementById('toggle-totp-view-btn');
   const optionsTotpBox   = document.getElementById('options-totp-box');
@@ -246,7 +242,7 @@
         showFeedback(totpOptionsMsg, 'Authenticator details revealed.', 'success');
         revealedSecret = res.totpSecret;
 
-        // Fetch live email or use stored profile name fallback
+        
         const fetchedEmail = await getOptionsProfileEmail();
         const accountLabel = fetchedEmail || (res.profileName && res.profileName !== 'Chrome Profile' ? res.profileName : 'Chrome Profile');
 
@@ -267,7 +263,7 @@
     }
   });
 
-  // ---- Reset extension ----
+  
 
   resetBtn.addEventListener('click', async () => {
     const pin = resetPinInput.value.trim();
@@ -302,7 +298,7 @@
     }
   });
 
-  // ---- Helpers ----
+  
 
   function showFeedback(el, text, type) {
     el.textContent = text;
@@ -337,13 +333,13 @@
     }
   }
 
-  // Open shortcuts page (chrome:// URLs can't be linked directly)
+  
   shortcutsLink.addEventListener('click', (e) => {
     e.preventDefault();
     chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
   });
 
-  // ---- Init ----
+  
   loadSettings();
   loadShortcut();
 })();

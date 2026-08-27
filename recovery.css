@@ -1,8 +1,3 @@
-/* ============================================================
-   Browser Lock — Account Recovery Styles
-   Dark glassmorphism theme, tab switcher, key upload support.
-   ============================================================ */
-
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -143,8 +138,6 @@ html, body {
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* ---- Segmented Tabs ---- */
-
 .recovery-tabs {
   display: flex;
   width: 100%;
@@ -180,8 +173,6 @@ html, body {
   box-shadow: 0 2px 8px var(--accent-glow);
 }
 
-/* ---- Sub-views ---- */
-
 .method-sub-area {
   display: none;
   width: 100%;
@@ -193,8 +184,6 @@ html, body {
   display: flex;
   animation: fadeIn 0.2s ease-out;
 }
-
-/* ---- TOTP Input Section ---- */
 
 .totp-field-group {
   width: 100%;
@@ -223,8 +212,6 @@ html, body {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
-
-/* ---- Upload & Manual Key Section ---- */
 
 .upload-file-box {
   display: flex;
@@ -293,8 +280,6 @@ html, body {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* ---- Form Fields for Reset PIN ---- */
-
 .form-field {
   width: 100%;
   margin-bottom: 12px;
@@ -342,8 +327,6 @@ html, body {
   color: var(--success);
 }
 
-/* ---- Buttons ---- */
-
 .primary-btn {
   position: relative;
   display: flex;
@@ -388,7 +371,6 @@ html, body {
   text-decoration: underline;
 }
 
-/* Spinner */
 .btn-spinner {
   display: none;
   width: 14px;
@@ -408,7 +390,6 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
-/* Shake */
 .shake {
   animation: shake 0.45s ease-in-out;
 }
@@ -423,7 +404,6 @@ html, body {
   90%      { transform: translateX(2px); }
 }
 
-/* Error message */
 .error-msg {
   width: 100%;
   margin-top: 10px;

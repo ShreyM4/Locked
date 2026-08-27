@@ -1,14 +1,6 @@
-// ============================================================
-// Browser Lock — Service Worker (Manifest V3)
-// Privacy-first browser profile lock screen.
-// No external connections, no tracking, no analytics.
-// ============================================================
-
 'use strict';
 
 importScripts('totp.js');
-
-// --------------- Constants ---------------
 
 const STATES = Object.freeze({
   UNINITIALIZED: 'UNINITIALIZED',
@@ -16,7 +8,7 @@ const STATES = Object.freeze({
   UNLOCKED: 'UNLOCKED'
 });
 
-const PBKDF2_ITERATIONS = 600000; // OWASP 2023 recommendation for SHA-256
+const PBKDF2_ITERATIONS = 600000; 
 const SALT_BYTES = 16;
 const HASH_BITS = 256;
 
@@ -30,17 +22,11 @@ const LOCK_WINDOW = { width: 400, height: 490 };
 const SETUP_WINDOW = { width: 440, height: 570 };
 const RECOVERY_WINDOW = { width: 400, height: 460 };
 
-// --------------- In-memory flags (not security state) ---------------
-
-let isCreatingLockWindow  = false;  // true while chrome.windows.create() is in-flight
-let isLockingInProgress   = false;  // true while lockBrowser() is processing multiple windows
-let lockEnforcementActive = false;  // true only when fully locked and ready to enforce
-let recreatingLockWindow  = false;  // mutex: prevents onRemoved re-entrant recreation
-let startupHandled        = false;  // ensures onStartup and IIFE don't both run lockBrowser
-
-// ============================================================
-//  Crypto helpers — Web Crypto API / PBKDF2-SHA256
-// ============================================================
+let isCreatingLockWindow  = false;  
+let isLockingInProgress   = false;  
+let lockEnforcementActive = false;  
+let recreatingLockWindow  = false;  
+let startupHandled        = false;  
 
 function toBase64(buffer) {
   const bytes = new Uint8Array(buffer);
@@ -81,7 +67,7 @@ async function createPinData(pin) {
 async function verifyPin(pin, pinData) {
   const saltBuf = new Uint8Array(fromBase64(pinData.salt));
   const hash = await deriveHash(pin, saltBuf, pinData.iterations);
-  // Constant-time-ish comparison (both are base64 strings of fixed length)
+  
   const a = toBase64(hash);
   const b = pinData.hash;
   if (a.length !== b.length) return false;
@@ -90,13 +76,9 @@ async function verifyPin(pin, pinData) {
   return diff === 0;
 }
 
-// ============================================================
-//  Storage helpers
-// ============================================================
-
 const DEFAULT_SETTINGS = Object.freeze({
   lockOnStartup: true,
-  inactivityTimeout: 0  // 0 = never
+  inactivityTimeout: 0  
 });
 
 async function getStore() {
@@ -125,11 +107,6 @@ async function setStore(updates) {
   await chrome.storage.local.set(updates);
 }
 
-// ============================================================
-//  Window helpers
-// ============================================================
-
-/** Estimate a centred position using an existing window as a reference. */
 function estimateCentre(refWindows, popupW, popupH) {
   let left = 200, top = 100;
   const ref = refWindows.find(w => w.state === 'maximized' || w.state === 'normal');
@@ -150,7 +127,7 @@ async function openPopupWindow(url, w, h) {
   try {
     const wins = await chrome.windows.getAll();
     pos = estimateCentre(wins, w, h);
-  } catch (_) { /* use defaults */ }
+  } catch (_) {  }
 
   return chrome.windows.create({
     url,
@@ -164,7 +141,7 @@ async function openPopupWindow(url, w, h) {
 }
 
 async function createLockWindow() {
-  // Guard: if another create is already in-flight, do nothing
+  
   if (isCreatingLockWindow) return null;
   isCreatingLockWindow = true;
   try {
@@ -173,7 +150,7 @@ async function createLockWindow() {
       LOCK_WINDOW.width,
       LOCK_WINDOW.height
     );
-    // Persist BEFORE releasing the flag so tabs.onCreated sees the correct ID
+    
     await setStore({ lockWindowId: win.id });
     return win;
   } finally {
@@ -211,12 +188,8 @@ async function createRecoveryWindow() {
   }
 }
 
-// ============================================================
-//  Lock / Unlock
-// ============================================================
-
 async function lockBrowser() {
-  // Prevent concurrent locking or event listener interference across multiple windows
+  
   isLockingInProgress = true;
   lockEnforcementActive = false;
 
@@ -224,14 +197,14 @@ async function lockBrowser() {
   const store = await getStore();
   const currentLockId = store.lockWindowId;
 
-  // Identify normal browser windows to protect (exclude popup lock windows)
+  
   const windowsToLock = allWindows.filter(w => w.id !== currentLockId && w.type === 'normal');
   const protectedIds = windowsToLock.map(w => w.id);
 
   const coverTabIds = [];
   const windowPrevStates = {};
 
-  // Phase 1: Open the black cover tab on EVERY open window first and record states
+  
   for (const win of windowsToLock) {
     windowPrevStates[win.id] = (win.state === 'fullscreen' || win.state === 'minimized') ? 'normal' : win.state;
     try {
@@ -244,7 +217,7 @@ async function lockBrowser() {
     } catch (_) {}
   }
 
-  // Persist cover tabs and states immediately so tabs.onCreated never touches them
+  
   await setStore({
     lockState: STATES.LOCKED,
     protectedWindowIds: protectedIds,
@@ -252,12 +225,12 @@ async function lockBrowser() {
     windowPrevStates: windowPrevStates
   });
 
-  // Phase 2: For each window, enter fullscreen (to hide tab strip/UI), verify, and minimize
+  
   for (const win of windowsToLock) {
     try {
       await chrome.windows.update(win.id, { state: 'fullscreen', focused: true });
 
-      // Wait until window reports fullscreen state
+      
       let waited = 0;
       while (waited < 250) {
         try {
@@ -268,24 +241,24 @@ async function lockBrowser() {
         waited += 25;
       }
 
-      // Allow DWM compositor sufficient time to capture the black fullscreen surface
+      
       await new Promise(r => setTimeout(r, 100));
 
-      // Minimize the window (Windows DWM Peek thumbnail now reliably retains the black frame)
+      
       await chrome.windows.update(win.id, { state: 'minimized' });
     } catch (_) {
       try { await chrome.windows.update(win.id, { state: 'minimized' }); } catch (_) {}
     }
   }
 
-  // Phase 3: Create or focus the lock popup window
+  
   let lockExists = false;
   if (currentLockId != null) {
     try {
       await chrome.windows.get(currentLockId);
       await chrome.windows.update(currentLockId, { focused: true });
       lockExists = true;
-    } catch (_) { /* window gone */ }
+    } catch (_) {  }
   }
   if (!lockExists) {
     await createLockWindow();
@@ -298,7 +271,7 @@ async function lockBrowser() {
 async function unlockBrowser() {
   const store = await getStore();
 
-  // Mark unlocked FIRST so enforcement listeners don't interfere
+  
   await setStore({
     lockState: STATES.UNLOCKED,
     failedAttempts: 0,
@@ -307,14 +280,14 @@ async function unlockBrowser() {
 
   lockEnforcementActive = false;
 
-  // 1. Close all temporary black cover tabs
+  
   const coverTabIds = store.coverTabIds || [];
   for (const tabId of coverTabIds) {
     try { await chrome.tabs.remove(tabId); }
-    catch (_) { /* already gone */ }
+    catch (_) {  }
   }
 
-  // Also query in case any cover.html tab was left over
+  
   try {
     const leftoverTabs = await chrome.tabs.query({ url: chrome.runtime.getURL('cover.html') });
     for (const t of leftoverTabs) {
@@ -322,7 +295,7 @@ async function unlockBrowser() {
     }
   } catch (_) {}
 
-  // 2. Restore protected windows to their exact pre-lock state (e.g. 'maximized' or 'normal')
+  
   const prevStates = store.windowPrevStates || {};
   let firstRestoredId = null;
 
@@ -331,16 +304,16 @@ async function unlockBrowser() {
     try {
       await chrome.windows.update(id, { state: targetState });
       if (firstRestoredId === null) firstRestoredId = id;
-    } catch (_) { /* gone */ }
+    } catch (_) {  }
   }
 
-  // 3. Focus the first restored window
+  
   if (firstRestoredId !== null) {
     try { await chrome.windows.update(firstRestoredId, { focused: true }); }
-    catch (_) { /* ok */ }
+    catch (_) {  }
   }
 
-  // 4. Close lock window
+  
   const lockId = store.lockWindowId;
   await setStore({
     lockWindowId: null,
@@ -351,29 +324,25 @@ async function unlockBrowser() {
 
   if (lockId != null) {
     try { await chrome.windows.remove(lockId); }
-    catch (_) { /* already gone */ }
+    catch (_) {  }
   }
 
-  // 5. Set up inactivity timer if configured
+  
   await setupInactivityAlarm();
 }
 
-// ============================================================
-//  Enforcement — keep the lock airtight while LOCKED
-// ============================================================
-
 async function enforceLock(focusedWindowId) {
   if (!lockEnforcementActive) return;
-  if (isCreatingLockWindow || isLockingInProgress) return;  // don't interfere while locking/creating windows
+  if (isCreatingLockWindow || isLockingInProgress) return;  
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
 
   if (focusedWindowId === chrome.windows.WINDOW_ID_NONE) return;
   if (focusedWindowId === store.lockWindowId) return;
 
-  // A non-lock window got focus → minimise it, refocus lock
+  
   try { await chrome.windows.update(focusedWindowId, { state: 'minimized' }); }
-  catch (_) { /* ok */ }
+  catch (_) {  }
 
   if (store.lockWindowId != null) {
     try { await chrome.windows.update(store.lockWindowId, { focused: true }); }
@@ -384,10 +353,6 @@ async function enforceLock(focusedWindowId) {
     if (!isCreatingLockWindow) await createLockWindow();
   }
 }
-
-// ============================================================
-//  Inactivity (optional — requires 'idle' permission)
-// ============================================================
 
 async function setupInactivityAlarm() {
   await chrome.alarms.clear('inactivityLock');
@@ -401,12 +366,8 @@ async function setupInactivityAlarm() {
     if (hasIdle) {
       chrome.idle.setDetectionInterval(mins * 60);
     }
-  } catch (_) { /* idle not available */ }
+  } catch (_) {  }
 }
-
-// ============================================================
-//  Brute-force protection
-// ============================================================
 
 function getLockoutDelay(attempts) {
   for (const tier of LOCKOUT_TIERS) {
@@ -415,13 +376,6 @@ function getLockoutDelay(attempts) {
   return 0;
 }
 
-// ============================================================
-//  Event Listeners (registered synchronously at top level)
-// ============================================================
-
-// --- Browser profile startup ---
-// NOTE: onStartup and the IIFE self-check below can both fire on browser start.
-// startupHandled ensures only ONE of them runs the lock logic.
 chrome.runtime.onStartup.addListener(async () => {
   if (startupHandled) return;
   startupHandled = true;
@@ -434,7 +388,7 @@ chrome.runtime.onStartup.addListener(async () => {
   }
 
   if (store.settings.lockOnStartup) {
-    // Reset lockWindowId so lockBrowser() creates a fresh window
+    
     await setStore({ lockWindowId: null });
     await lockBrowser();
   } else {
@@ -442,7 +396,6 @@ chrome.runtime.onStartup.addListener(async () => {
   }
 });
 
-// --- Extension installed / updated ---
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await setStore({
@@ -460,15 +413,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
-// --- Window focus changed ---
 chrome.windows.onFocusChanged.addListener((windowId) => {
   if (isLockingInProgress) return;
   enforceLock(windowId);
 });
 
-// --- New window created ---
 chrome.windows.onCreated.addListener(async (win) => {
-  // Always ignore windows WE are creating or during lock transition
+  
   if (isCreatingLockWindow || isLockingInProgress) return;
   if (!lockEnforcementActive) return;
 
@@ -476,18 +427,17 @@ chrome.windows.onCreated.addListener(async (win) => {
   if (store.lockState !== STATES.LOCKED) return;
   if (win.id === store.lockWindowId) return;
 
-  // Close the intruding window (it has no session data to lose)
+  
   try { await chrome.windows.remove(win.id); }
-  catch (_) { /* ok */ }
+  catch (_) {  }
 
-  // Refocus lock
+  
   if (store.lockWindowId != null) {
     try { await chrome.windows.update(store.lockWindowId, { focused: true }); }
-    catch (_) { /* ok */ }
+    catch (_) {  }
   }
 });
 
-// --- Lock window removed ---
 chrome.windows.onRemoved.addListener(async (windowId) => {
   if (isCreatingLockWindow || isLockingInProgress) return;
 
@@ -495,60 +445,56 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
   if (store.lockState !== STATES.LOCKED) return;
   if (windowId !== store.lockWindowId) return;
 
-  // Just clear the stored window ID — do NOT recreate automatically
+  
   await setStore({ lockWindowId: null });
 });
 
-// --- New tab created ---
 chrome.tabs.onCreated.addListener(async (tab) => {
-  // Never remove tabs that belong to a window we are currently creating or during locking
+  
   if (isCreatingLockWindow || isLockingInProgress) return;
   if (!lockEnforcementActive) return;
 
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
 
-  // Allow tabs in the lock window itself
+  
   if (tab.windowId === store.lockWindowId) return;
 
-  // Allow temporary cover tabs
+  
   if (store.coverTabIds && store.coverTabIds.includes(tab.id)) return;
 
-  // Remove tabs opened outside the lock window
+  
   try { await chrome.tabs.remove(tab.id); }
-  catch (_) { /* ok */ }
+  catch (_) {  }
 });
 
-// --- Extension action icon clicked → LOCK immediately ---
 chrome.action.onClicked.addListener(async () => {
   const store = await getStore();
 
   if (store.lockState === STATES.LOCKED) {
-    // Already locked — focus the lock window
+    
     if (store.lockWindowId != null) {
       try { await chrome.windows.update(store.lockWindowId, { focused: true }); return; }
-      catch (_) { /* fall through to create */ }
+      catch (_) {  }
     }
     await createLockWindow();
   } else if (store.lockState === STATES.UNLOCKED) {
-    // Unlocked — lock the browser now
+    
     await lockBrowser();
   } else {
-    // Uninitialized — open setup
+    
     await createSetupWindow();
   }
 });
 
-// --- Alarms ---
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'inactivityLock') {
     const store = await getStore();
     if (store.lockState === STATES.UNLOCKED) await lockBrowser();
   }
-  // 'lockoutTimer' alarms are advisory — the time-check in VERIFY_PIN handles expiry
+  
 });
 
-// --- Keyboard shortcut command (default: Ctrl+Shift+Z) ---
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'lock-browser') {
     const store = await getStore();
@@ -556,12 +502,11 @@ chrome.commands.onCommand.addListener(async (command) => {
       await lockBrowser();
     } else if (store.lockState === STATES.LOCKED && store.lockWindowId != null) {
       try { await chrome.windows.update(store.lockWindowId, { focused: true }); }
-      catch (_) { /* ok */ }
+      catch (_) {  }
     }
   }
 });
 
-// --- Idle state (optional permission) ---
 try {
   if (chrome.idle && chrome.idle.onStateChanged) {
     chrome.idle.onStateChanged.addListener(async (newState) => {
@@ -572,23 +517,19 @@ try {
       await lockBrowser();
     });
   }
-} catch (_) { /* idle permission not granted — safe to ignore */ }
-
-// ============================================================
-//  Message handling  (lock.js / setup.js / options.js ↔ background)
-// ============================================================
+} catch (_) {  }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   handleMessage(msg, sender).then(sendResponse).catch(err => {
     sendResponse({ success: false, error: String(err) });
   });
-  return true; // async
+  return true; 
 });
 
 async function handleMessage(msg, sender) {
   switch (msg.type) {
 
-    // ---- Setup: create initial PIN ----
+    
     case 'CREATE_PIN': {
       const pinData = await createPinData(msg.pin);
       const updates = {
@@ -604,22 +545,22 @@ async function handleMessage(msg, sender) {
       }
       await setStore(updates);
 
-      // Close setup window → lock browser
+      
       const setupWinId = sender.tab ? sender.tab.windowId : null;
       if (setupWinId != null) {
         try { await chrome.windows.remove(setupWinId); }
-        catch (_) { /* ok */ }
+        catch (_) {  }
       }
 
       await lockBrowser();
       return { success: true };
     }
 
-    // ---- Lock screen: verify PIN ----
+    
     case 'VERIFY_PIN': {
       const store = await getStore();
 
-      // Check lockout
+      
       if (store.lockoutUntil > Date.now()) {
         const remaining = Math.ceil((store.lockoutUntil - Date.now()) / 1000);
         return { success: false, locked: true, remainingSeconds: remaining };
@@ -635,7 +576,7 @@ async function handleMessage(msg, sender) {
         return { success: true };
       }
 
-      // Wrong PIN
+      
       const attempts = store.failedAttempts + 1;
       const delay = getLockoutDelay(attempts);
       const until = delay > 0 ? Date.now() + delay * 1000 : 0;
@@ -653,7 +594,7 @@ async function handleMessage(msg, sender) {
       };
     }
 
-    // ---- Get current state (for UI pages) ----
+    
     case 'GET_STATE': {
       const store = await getStore();
       let lockoutRemaining = 0;
@@ -669,7 +610,7 @@ async function handleMessage(msg, sender) {
       };
     }
 
-    // ---- Options: update settings ----
+    
     case 'UPDATE_SETTINGS': {
       const store = await getStore();
       const merged = { ...store.settings, ...msg.settings };
@@ -684,7 +625,7 @@ async function handleMessage(msg, sender) {
       return { success: true };
     }
 
-    // ---- Options: change PIN ----
+    
     case 'CHANGE_PIN': {
       const store = await getStore();
       if (!store.pinData) return { success: false, error: 'No PIN set.' };
@@ -697,7 +638,7 @@ async function handleMessage(msg, sender) {
       return { success: true };
     }
 
-    // ---- Options: reset extension ----
+    
     case 'RESET_EXTENSION': {
       const store = await getStore();
       if (!store.pinData) return { success: false, error: 'No PIN set.' };
@@ -716,31 +657,31 @@ async function handleMessage(msg, sender) {
       return { success: true };
     }
 
-    // ---- Switch to Recovery Window from Lock Screen ----
+    
     case 'OPEN_RECOVERY_WINDOW': {
       const store = await getStore();
       if (store.lockWindowId != null) {
         try { await chrome.windows.remove(store.lockWindowId); }
-        catch (_) { /* ok */ }
+        catch (_) {  }
       }
       await setStore({ lockWindowId: null });
       await createRecoveryWindow();
       return { success: true };
     }
 
-    // ---- Switch to Lock Window from Recovery Screen ----
+    
     case 'OPEN_LOCK_WINDOW': {
       const store = await getStore();
       if (store.lockWindowId != null) {
         try { await chrome.windows.remove(store.lockWindowId); }
-        catch (_) { /* ok */ }
+        catch (_) {  }
       }
       await setStore({ lockWindowId: null });
       await createLockWindow();
       return { success: true };
     }
 
-    // ---- Verify Offline TOTP Code ----
+    
     case 'VERIFY_TOTP': {
       const store = await getStore();
       if (!store.totpSecret) {
@@ -754,7 +695,7 @@ async function handleMessage(msg, sender) {
       return { success: false, error: 'Invalid or expired code. Please try again.' };
     }
 
-    // ---- Verify Saved Recovery Key (File or Manual Text) ----
+    
     case 'VERIFY_RECOVERY_KEY': {
       const store = await getStore();
       if (!store.totpSecret) {
@@ -787,12 +728,12 @@ async function handleMessage(msg, sender) {
         lockoutUntil: 0
       });
 
-      // Restore windows and complete recovery
+      
       await unlockBrowser();
       return { success: true };
     }
 
-    // ---- Options: Get/Set TOTP Secret with PIN confirmation ----
+    
     case 'GET_TOTP_SECRET_WITH_PIN': {
       const store = await getStore();
       if (!store.pinData) return { success: false, error: 'No PIN set.' };
@@ -820,7 +761,7 @@ async function handleMessage(msg, sender) {
       return { success: true };
     }
 
-    // ---- Options / action: lock now ----
+    
     case 'LOCK_NOW': {
       await lockBrowser();
       return { success: true };
@@ -831,17 +772,9 @@ async function handleMessage(msg, sender) {
   }
 }
 
-// ============================================================
-//  Self-check on service-worker wake-up
-//  (handles SW restart while browser is locked)
-//
-//  IMPORTANT: On a real browser startup, chrome.runtime.onStartup also fires.
-//  The startupHandled flag ensures only ONE path runs lock logic.
-//  This IIFE only acts when the SW restarts mid-session (not on cold start).
-// ============================================================
 (async () => {
   try {
-    // Give onStartup a tick to claim startupHandled first if this is a cold start
+    
     await new Promise(resolve => setTimeout(resolve, 0));
 
     const store = await getStore();
@@ -849,17 +782,17 @@ async function handleMessage(msg, sender) {
     if (store.lockState === STATES.LOCKED) {
       lockEnforcementActive = true;
 
-      // If onStartup already handled the lock window creation, skip
+      
       if (!startupHandled) {
         startupHandled = true;
 
-        // Check if a lock window already exists and is alive
+        
         let lockWindowAlive = false;
         if (store.lockWindowId != null) {
           try {
             await chrome.windows.get(store.lockWindowId);
             lockWindowAlive = true;
-          } catch (_) { /* window is gone */ }
+          } catch (_) {  }
         }
 
         if (!lockWindowAlive) {
@@ -868,14 +801,14 @@ async function handleMessage(msg, sender) {
         }
       }
 
-      // Re-minimise any protected windows that may have been un-minimised
+      
       for (const id of store.protectedWindowIds) {
         try { await chrome.windows.update(id, { state: 'minimized' }); }
-        catch (_) { /* ok */ }
+        catch (_) {  }
       }
 
     } else if (store.lockState === STATES.UNLOCKED) {
       await setupInactivityAlarm();
     }
-  } catch (_) { /* first run — storage empty, nothing to do */ }
+  } catch (_) {  }
 })();

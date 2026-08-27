@@ -8,39 +8,28 @@
 </head>
 <body>
   <div class="recovery-container">
-    <!-- Ambient glow -->
+    
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
     <div class="recovery-card">
-      <!-- Shield Key SVG icon -->
+      
       <div class="recovery-icon" aria-hidden="true">
-        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <defs>
-            <linearGradient id="recGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#6366f1"/>
-              <stop offset="100%" stop-color="#a78bfa"/>
-            </linearGradient>
-          </defs>
-          <path d="M32 4L8 16v16c0 14.4 10.24 27.84 24 32 13.76-4.16 24-17.6 24-32V16L32 4z"
-                fill="url(#recGrad)" opacity="0.9"/>
-          <circle cx="28" cy="30" r="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
-          <path d="M32.5 34.5L42 44M39 41l2 2M41 39l2 2" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+        <img src="logo.svg" width="52" height="52" alt="Browser Lock">
       </div>
 
       <h1 class="recovery-title" id="view-title">Account Recovery</h1>
       <p class="recovery-subtitle" id="view-subtitle">Select a recovery option to reset your PIN</p>
 
-      <!-- View 1: Recovery Verification -->
+      
       <div id="methods-view" class="view-section active">
-        <!-- Segmented Tab Switcher -->
+        
         <div class="recovery-tabs">
           <button id="tab-totp-btn" class="rec-tab-btn active" type="button">App Code</button>
           <button id="tab-file-btn" class="rec-tab-btn" type="button">Saved Key / File</button>
         </div>
 
-        <!-- Sub-view A: 6-Digit App Code -->
+        
         <div id="totp-method-area" class="method-sub-area active">
           <div class="totp-field-group">
             <input
@@ -62,7 +51,7 @@
           </div>
         </div>
 
-        <!-- Sub-view B: Saved Key File / Text -->
+        
         <div id="file-method-area" class="method-sub-area">
           <input type="file" id="key-file-input" style="display: none;">
           
@@ -100,7 +89,7 @@
         </button>
       </div>
 
-      <!-- View 2: Reset PIN (Visible only after successful verification) -->
+      
       <div id="reset-pin-view" class="view-section">
         <div class="success-banner">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

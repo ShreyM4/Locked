@@ -1,11 +1,7 @@
-// ============================================================
-// Browser Lock — Setup Screen Logic
-// ============================================================
-
 'use strict';
 
 (function () {
-  // DOM refs
+  
   const stepCreate        = document.getElementById('step-create');
   const stepConfirm       = document.getElementById('step-confirm');
   const stepTotp          = document.getElementById('step-totp');
@@ -31,7 +27,7 @@
   let generatedTotpSecret = '';
   let detectedProfileEmail = 'Chrome Profile';
 
-  // ---- PIN & TOTP filtering (digits only) ----
+  
 
   function filterDigits(input) {
     input.addEventListener('input', () => {
@@ -52,7 +48,7 @@
   filterDigits(confirmInput);
   filterDigits(setupTotpCode);
 
-  // ---- PIN strength indicator ----
+  
 
   newPinInput.addEventListener('input', () => {
     const len = newPinInput.value.length;
@@ -84,7 +80,7 @@
     strengthLabel.textContent = label;
   }
 
-  // ---- Step 1 → Step 2 ----
+  
 
   nextBtn.addEventListener('click', () => goToConfirm());
 
@@ -117,7 +113,7 @@
     newPinInput.focus();
   });
 
-  // ---- Step 2: Confirm -> Step 3: TOTP Setup ----
+  
 
   confirmBtn.addEventListener('click', () => goToTotpSetup());
 
@@ -125,7 +121,7 @@
     if (e.key === 'Enter') goToTotpSetup();
   });
 
-  // Fetch Google Account Email via official Chrome Identity API
+  
   async function getProfileAccountEmail() {
     try {
       if (chrome.identity && chrome.identity.getProfileUserInfo) {
@@ -185,7 +181,7 @@
       setupAccountEmail.textContent = email ? email : 'Chrome Profile (Not signed in)';
     }
 
-    // Generate offline cryptographically random TOTP secret
+    
     if (!generatedTotpSecret && window.TOTPEngine) {
       generatedTotpSecret = TOTPEngine.generateSecret(20);
     }
@@ -204,7 +200,7 @@
     confirmInput.focus();
   });
 
-  // ---- Step 3: Finish Setup & Lock ----
+  
 
   finishSetupBtn.addEventListener('click', () => finishSetup());
 
@@ -236,7 +232,7 @@
       if (err.name === 'AbortError') return;
     }
 
-    // Fallback: standard browser file download
+    
     try {
       const blob = new Blob([rawBytes], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
@@ -263,7 +259,7 @@
       return;
     }
 
-    // Verify TOTP code locally to ensure user actually scanned it
+    
     if (window.TOTPEngine) {
       const isValid = await TOTPEngine.verifyTOTP(code, generatedTotpSecret);
       if (!isValid) {
@@ -280,7 +276,7 @@
     backToStep2Btn.disabled = true;
 
     try {
-      // Prompt user to save the manual key as a binary file
+      
       await saveKeyBinaryFile(generatedTotpSecret, detectedProfileEmail);
 
       const result = await sendMessage({
@@ -304,7 +300,7 @@
     }
   }
 
-  // ---- Helpers ----
+  
 
   function showError(msg) {
     errorMsg.textContent = msg;
@@ -334,7 +330,7 @@
     });
   }
 
-  // ---- Prevent context menu and navigation ----
+  
   document.addEventListener('contextmenu', (e) => e.preventDefault());
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r')) {

@@ -396,31 +396,19 @@ chrome.windows.onCreated.addListener(async (win) => {
 });
 
 // --- Lock window removed ---
+// The user clicked X — respect that and close cleanly.
+// The browser stays LOCKED (all other windows remain minimized).
+// The lock screen reappears when the user clicks the extension icon
+// or tries to restore one of the minimized windows.
 chrome.windows.onRemoved.addListener(async (windowId) => {
-  // Ignore if we're in the middle of creating a lock window
   if (isCreatingLockWindow) return;
-  // Mutex: prevent concurrent recreation calls
-  if (recreatingLockWindow) return;
 
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
   if (windowId !== store.lockWindowId) return;
 
-  // Lock window was closed by user — clear stored ID and recreate
-  recreatingLockWindow = true;
+  // Just clear the stored window ID — do NOT recreate automatically
   await setStore({ lockWindowId: null });
-
-  // Small debounce to let Chrome settle, then create exactly one new window
-  setTimeout(async () => {
-    try {
-      const current = await getStore();
-      if (current.lockState === STATES.LOCKED && current.lockWindowId == null) {
-        await createLockWindow();
-      }
-    } finally {
-      recreatingLockWindow = false;
-    }
-  }, 400);
 });
 
 // --- New tab created ---

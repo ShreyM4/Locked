@@ -36,7 +36,7 @@ Install directly from the [Chrome Web Store](https://chrome.google.com/webstore)
 ### Option 2: Load Unpacked (Developer Mode)
 1. Clone or download this repository:
    ```bash
-   git clone https://github.com/your-username/simple-lock.git
+   git clone https://github.com/ShreyM4/Locked
    ```
 2. Open Google Chrome and navigate to `chrome://extensions`.
 3. Enable **Developer mode** toggle in the top right corner.
@@ -74,7 +74,7 @@ Simple Lock follows the principle of least privilege:
 
 Simple Lock is designed with strict **zero-knowledge privacy**:
 - No personal data, browsing history, cookies, or credentials are ever collected or transmitted.
-- Read our full [Privacy Policy](privacy.html).
+- Read our full [Privacy Policy](https://shreym4.github.io/Locked/privacy.html).
 
 ---
 

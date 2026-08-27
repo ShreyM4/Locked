@@ -1,0 +1,313 @@
+/* ============================================================
+   Browser Lock — Lock Screen Styles
+   Dark glassmorphism design, no external dependencies.
+   ============================================================ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-deep:       #0a0a14;
+  --bg-card:       rgba(255, 255, 255, 0.04);
+  --card-border:   rgba(255, 255, 255, 0.08);
+  --text-primary:  #f0f0f5;
+  --text-secondary:#9898b0;
+  --accent:        #6366f1;
+  --accent-glow:   rgba(99, 102, 241, 0.35);
+  --accent-hover:  #818cf8;
+  --error:         #f87171;
+  --error-bg:      rgba(248, 113, 113, 0.1);
+  --input-bg:      rgba(255, 255, 255, 0.06);
+  --input-border:  rgba(255, 255, 255, 0.12);
+  --input-focus:   rgba(99, 102, 241, 0.5);
+  --lockout:       #fbbf24;
+  --radius:        16px;
+  --transition:    0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ---- Ambient background orbs ---- */
+
+.lock-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+  animation: float 12s ease-in-out infinite alternate;
+}
+
+.orb-1 {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+  top: -60px;
+  left: -40px;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, #a78bfa 0%, transparent 70%);
+  bottom: -40px;
+  right: -30px;
+  animation-delay: -6s;
+}
+
+@keyframes float {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(20px, 15px) scale(1.1); }
+}
+
+/* ---- Card ---- */
+
+.lock-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+  padding: 40px 32px 36px;
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 24px 64px rgba(0,0,0,0.4);
+  animation: cardIn 0.5s ease-out both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ---- Icon ---- */
+
+.lock-icon {
+  margin-bottom: 20px;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* ---- Typography ---- */
+
+.lock-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
+}
+
+.lock-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+/* ---- PIN Input ---- */
+
+.pin-wrapper {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.pin-input {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 28px;
+  font-family: inherit;
+  letter-spacing: 10px;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  caret-color: var(--accent);
+}
+
+.pin-input::placeholder {
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 8px;
+  font-size: 24px;
+}
+
+.pin-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: rgba(255,255,255,0.08);
+}
+
+.pin-input.shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-8px); }
+  30%      { transform: translateX(7px); }
+  45%      { transform: translateX(-6px); }
+  60%      { transform: translateX(5px); }
+  75%      { transform: translateX(-3px); }
+  90%      { transform: translateX(2px); }
+}
+
+/* ---- Unlock Button ---- */
+
+.unlock-btn {
+  position: relative;
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+.unlock-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px var(--accent-glow);
+}
+
+.unlock-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.unlock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.unlock-btn .btn-spinner {
+  display: none;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.unlock-btn.loading .btn-spinner {
+  display: block;
+}
+
+.unlock-btn.loading .btn-text {
+  opacity: 0.7;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* ---- Error message ---- */
+
+.error-msg {
+  width: 100%;
+  margin-top: 16px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--error);
+  text-align: center;
+  min-height: 20px;
+  transition: opacity var(--transition);
+}
+
+.error-msg:empty {
+  opacity: 0;
+}
+
+.error-msg.visible {
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ---- Lockout message ---- */
+
+.lockout-msg {
+  width: 100%;
+  margin-top: 10px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--lockout);
+  text-align: center;
+  min-height: 0;
+  transition: opacity var(--transition);
+}
+
+.lockout-msg:empty {
+  display: none;
+}
+
+.lockout-msg.visible {
+  padding: 10px 14px;
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Footer ---- */
+
+.footer-note {
+  position: absolute;
+  bottom: 16px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.03em;
+}
+
+/* ---- Prevent right-click visual cue ---- */
+::selection {
+  background: var(--accent);
+  color: #fff;
+}

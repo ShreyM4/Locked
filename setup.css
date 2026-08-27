@@ -1,0 +1,353 @@
+/* ============================================================
+   Browser Lock — Setup Screen Styles
+   Shares design language with lock.css
+   ============================================================ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-deep:       #0a0a14;
+  --bg-card:       rgba(255, 255, 255, 0.04);
+  --card-border:   rgba(255, 255, 255, 0.08);
+  --text-primary:  #f0f0f5;
+  --text-secondary:#9898b0;
+  --accent:        #6366f1;
+  --accent-glow:   rgba(99, 102, 241, 0.35);
+  --accent-hover:  #818cf8;
+  --error:         #f87171;
+  --error-bg:      rgba(248, 113, 113, 0.1);
+  --success:       #34d399;
+  --warning:       #fbbf24;
+  --input-bg:      rgba(255, 255, 255, 0.06);
+  --input-border:  rgba(255, 255, 255, 0.12);
+  --input-focus:   rgba(99, 102, 241, 0.5);
+  --radius:        16px;
+  --transition:    0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ---- Layout ---- */
+
+.setup-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
+  animation: float 12s ease-in-out infinite alternate;
+}
+
+.orb-1 {
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, #6366f1, transparent 70%);
+  top: -50px; left: -30px;
+}
+
+.orb-2 {
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, #a78bfa, transparent 70%);
+  bottom: -30px; right: -20px;
+  animation-delay: -6s;
+}
+
+@keyframes float {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(15px, 10px) scale(1.08); }
+}
+
+/* ---- Card ---- */
+
+.setup-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 24px 64px rgba(0,0,0,0.4);
+  animation: cardIn 0.5s ease-out both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ---- Icon ---- */
+
+.setup-icon {
+  margin-bottom: 16px;
+}
+
+/* ---- Typography ---- */
+
+.setup-title {
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.setup-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-align: left;
+  width: 100%;
+}
+
+/* ---- Steps ---- */
+
+.step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: stepIn 0.35s ease-out;
+}
+
+.step.active {
+  display: flex;
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---- PIN Input ---- */
+
+.pin-wrapper {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.pin-input {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 28px;
+  font-family: inherit;
+  letter-spacing: 10px;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  caret-color: var(--accent);
+}
+
+.pin-input::placeholder {
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 8px;
+  font-size: 24px;
+}
+
+.pin-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.pin-input.shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-8px); }
+  30%      { transform: translateX(7px); }
+  45%      { transform: translateX(-6px); }
+  60%      { transform: translateX(5px); }
+  75%      { transform: translateX(-3px); }
+  90%      { transform: translateX(2px); }
+}
+
+/* ---- PIN Strength ---- */
+
+.pin-strength {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  min-height: 20px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.strength-label {
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ---- Buttons ---- */
+
+.primary-btn {
+  position: relative;
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px var(--accent-glow);
+}
+
+.primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-btn .btn-spinner {
+  display: none;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.primary-btn.loading .btn-spinner {
+  display: block;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.secondary-btn {
+  width: 100%;
+  padding: 12px 24px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.secondary-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ---- Error ---- */
+
+.error-msg {
+  width: 100%;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--error);
+  text-align: center;
+  min-height: 20px;
+}
+
+.error-msg:empty {
+  opacity: 0;
+}
+
+.error-msg.visible {
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Footer ---- */
+
+.footer-note {
+  position: absolute;
+  bottom: 16px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.03em;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}

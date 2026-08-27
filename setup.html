@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Up Browser Lock</title>
+  <link rel="stylesheet" href="setup.css">
+</head>
+<body>
+  <div class="setup-container">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="setup-card">
+      <!-- Shield icon -->
+      <div class="setup-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+          <defs>
+            <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+          </defs>
+          <path d="M32 4L8 16v16c0 14.4 10.24 27.84 24 32 13.76-4.16 24-17.6 24-32V16L32 4z"
+                fill="url(#sg)" opacity="0.9"/>
+          <rect x="23" y="31" width="18" height="14" rx="3" fill="rgba(255,255,255,0.92)"/>
+          <path d="M27 31v-5a5 5 0 0 1 10 0v5" fill="none" stroke="rgba(255,255,255,0.92)"
+                stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="32" cy="37" r="2" fill="#4338ca"/>
+          <rect x="31.2" y="37" width="1.6" height="3.5" rx="0.8" fill="#4338ca"/>
+        </svg>
+      </div>
+
+      <h1 class="setup-title">Set Up Browser Lock</h1>
+      <p class="setup-subtitle">Create a PIN to protect this Chrome profile</p>
+
+      <!-- Step 1: Create PIN -->
+      <div id="step-create" class="step active">
+        <label for="new-pin" class="field-label">Create a PIN (4–16 digits)</label>
+        <div class="pin-wrapper">
+          <input
+            type="password"
+            id="new-pin"
+            class="pin-input"
+            maxlength="16"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+            autofocus
+            placeholder="••••••"
+            aria-label="Create PIN"
+          >
+        </div>
+        <div id="pin-strength" class="pin-strength">
+          <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+          <span class="strength-label" id="strength-label"></span>
+        </div>
+        <button id="next-btn" class="primary-btn" type="button">Continue</button>
+      </div>
+
+      <!-- Step 2: Confirm PIN -->
+      <div id="step-confirm" class="step">
+        <label for="confirm-pin" class="field-label">Confirm your PIN</label>
+        <div class="pin-wrapper">
+          <input
+            type="password"
+            id="confirm-pin"
+            class="pin-input"
+            maxlength="16"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="••••••"
+            aria-label="Confirm PIN"
+          >
+        </div>
+        <button id="confirm-btn" class="primary-btn" type="button">
+          <span class="btn-text">Set PIN &amp; Lock Browser</span>
+          <span class="btn-spinner" id="spinner" aria-hidden="true"></span>
+        </button>
+        <button id="back-btn" class="secondary-btn" type="button">Back</button>
+      </div>
+
+      <div id="error-msg" class="error-msg" role="alert" aria-live="polite"></div>
+    </div>
+
+    <p class="footer-note">Everything stays local — no accounts, no cloud, no tracking</p>
+  </div>
+
+  <script src="setup.js"></script>
+</body>
+</html>

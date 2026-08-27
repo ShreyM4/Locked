@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Browser Lock",
+  "version": "1.0.0",
+  "description": "Privacy-first browser profile lock screen. No tracking, no analytics, no external connections. Everything stays local.",
+
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+
+  "optional_permissions": [
+    "idle"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_title": "Browser Lock",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "options_page": "options.html",
+
+  "commands": {
+    "lock-browser": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Z"
+      },
+      "description": "Lock the browser"
+    }
+  }
+}

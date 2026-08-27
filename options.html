@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Lock — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <div class="options-header">
+      <div class="header-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+          <defs>
+            <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+          </defs>
+          <path d="M32 4L8 16v16c0 14.4 10.24 27.84 24 32 13.76-4.16 24-17.6 24-32V16L32 4z"
+                fill="url(#sg)" opacity="0.9"/>
+          <rect x="23" y="31" width="18" height="14" rx="3" fill="rgba(255,255,255,0.92)"/>
+          <path d="M27 31v-5a5 5 0 0 1 10 0v5" fill="none" stroke="rgba(255,255,255,0.92)"
+                stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="32" cy="37" r="2" fill="#4338ca"/>
+          <rect x="31.2" y="37" width="1.6" height="3.5" rx="0.8" fill="#4338ca"/>
+        </svg>
+      </div>
+      <h1>Browser Lock Settings</h1>
+    </div>
+
+    <!-- Lock on Startup -->
+    <section class="section">
+      <h2 class="section-title">Startup</h2>
+      <label class="toggle-row" for="lock-on-startup">
+        <span class="toggle-label">
+          <span class="toggle-name">Lock on Chrome startup</span>
+          <span class="toggle-desc">Automatically lock the browser when this Chrome profile starts</span>
+        </span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="lock-on-startup" checked>
+          <span class="toggle-track"></span>
+        </div>
+      </label>
+    </section>
+
+    <!-- Inactivity Auto-Lock -->
+    <section class="section">
+      <h2 class="section-title">Auto-Lock</h2>
+      <div class="select-row">
+        <div class="select-info">
+          <span class="toggle-name">Lock after inactivity</span>
+          <span class="toggle-desc">Automatically lock when you've been away</span>
+        </div>
+        <select id="inactivity-timeout" class="styled-select">
+          <option value="0">Never</option>
+          <option value="5">5 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">1 hour</option>
+        </select>
+      </div>
+      <div id="idle-permission-notice" class="notice" style="display: none;">
+        <span class="notice-icon">ℹ</span>
+        <span>This feature requires the "idle" permission to detect inactivity.</span>
+        <button id="grant-idle-btn" class="link-btn" type="button">Grant Permission</button>
+      </div>
+    </section>
+
+    <!-- Lock Now + Shortcut -->
+    <section class="section">
+      <h2 class="section-title">Quick Actions</h2>
+      <button id="lock-now-btn" class="action-btn" type="button">
+        <span class="action-icon">🔒</span>
+        Lock Browser Now
+      </button>
+      <div class="shortcut-row">
+        <div class="shortcut-info">
+          <span class="toggle-name">Keyboard shortcut</span>
+          <span class="toggle-desc">Press to instantly lock the browser</span>
+        </div>
+        <kbd class="shortcut-kbd" id="shortcut-display">Ctrl+Shift+Z</kbd>
+      </div>
+      <p class="shortcut-hint">
+        Customize at <a id="shortcuts-link" href="#">chrome://extensions/shortcuts</a>
+      </p>
+    </section>
+
+    <!-- Change PIN -->
+    <section class="section">
+      <h2 class="section-title">Change PIN</h2>
+      <div class="form-group">
+        <input type="password" id="current-pin" class="text-input" maxlength="16"
+               inputmode="numeric" autocomplete="off" placeholder="Current PIN" aria-label="Current PIN">
+        <input type="password" id="new-pin" class="text-input" maxlength="16"
+               inputmode="numeric" autocomplete="off" placeholder="New PIN (4–16 digits)" aria-label="New PIN">
+        <input type="password" id="confirm-new-pin" class="text-input" maxlength="16"
+               inputmode="numeric" autocomplete="off" placeholder="Confirm new PIN" aria-label="Confirm new PIN">
+        <button id="change-pin-btn" class="action-btn" type="button">Change PIN</button>
+        <div id="change-pin-msg" class="feedback-msg" role="status"></div>
+      </div>
+    </section>
+
+    <!-- Reset -->
+    <section class="section danger-section">
+      <h2 class="section-title danger-title">Reset Extension</h2>
+      <p class="danger-desc">This removes your PIN and all settings. You will need to set up a new PIN.</p>
+      <div class="form-group">
+        <input type="password" id="reset-pin" class="text-input" maxlength="16"
+               inputmode="numeric" autocomplete="off" placeholder="Enter current PIN to confirm" aria-label="PIN for reset">
+        <button id="reset-btn" class="danger-btn" type="button">Reset Extension</button>
+        <div id="reset-msg" class="feedback-msg" role="status"></div>
+      </div>
+    </section>
+
+    <footer class="options-footer">
+      <p>Browser Lock v1.0.0 · Privacy-first · No data leaves your computer</p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

@@ -29,8 +29,10 @@ const SETUP_WINDOW = { width: 480, height: 600 };
 
 // --------------- In-memory flags (not security state) ---------------
 
-let isCreatingLockWindow = false;
-let lockEnforcementActive = false;
+let isCreatingLockWindow  = false;  // true while chrome.windows.create() is in-flight
+let lockEnforcementActive = false;  // true only when fully locked and ready to enforce
+let recreatingLockWindow  = false;  // mutex: prevents onRemoved re-entrant recreation
+let startupHandled        = false;  // ensures onStartup and IIFE don't both run lockBrowser
 
 // ============================================================
 //  Crypto helpers — Web Crypto API / PBKDF2-SHA256
@@ -153,6 +155,8 @@ async function openPopupWindow(url, w, h) {
 }
 
 async function createLockWindow() {
+  // Guard: if another create is already in-flight, do nothing
+  if (isCreatingLockWindow) return null;
   isCreatingLockWindow = true;
   try {
     const win = await openPopupWindow(
@@ -160,6 +164,7 @@ async function createLockWindow() {
       LOCK_WINDOW.width,
       LOCK_WINDOW.height
     );
+    // Persist BEFORE releasing the flag so tabs.onCreated sees the correct ID
     await setStore({ lockWindowId: win.id });
     return win;
   } finally {
@@ -268,6 +273,7 @@ async function unlockBrowser() {
 
 async function enforceLock(focusedWindowId) {
   if (!lockEnforcementActive) return;
+  if (isCreatingLockWindow) return;  // don't interfere while lock window is being created
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
 
@@ -280,9 +286,11 @@ async function enforceLock(focusedWindowId) {
 
   if (store.lockWindowId != null) {
     try { await chrome.windows.update(store.lockWindowId, { focused: true }); }
-    catch (_) { await createLockWindow(); }
+    catch (_) {
+      if (!isCreatingLockWindow) await createLockWindow();
+    }
   } else {
-    await createLockWindow();
+    if (!isCreatingLockWindow) await createLockWindow();
   }
 }
 
@@ -321,7 +329,12 @@ function getLockoutDelay(attempts) {
 // ============================================================
 
 // --- Browser profile startup ---
+// NOTE: onStartup and the IIFE self-check below can both fire on browser start.
+// startupHandled ensures only ONE of them runs the lock logic.
 chrome.runtime.onStartup.addListener(async () => {
+  if (startupHandled) return;
+  startupHandled = true;
+
   const store = await getStore();
 
   if (store.lockState === STATES.UNINITIALIZED || !store.pinData) {
@@ -330,6 +343,8 @@ chrome.runtime.onStartup.addListener(async () => {
   }
 
   if (store.settings.lockOnStartup) {
+    // Reset lockWindowId so lockBrowser() creates a fresh window
+    await setStore({ lockWindowId: null });
     await lockBrowser();
   } else {
     await setupInactivityAlarm();
@@ -361,6 +376,7 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 
 // --- New window created ---
 chrome.windows.onCreated.addListener(async (win) => {
+  // Always ignore windows WE are creating
   if (isCreatingLockWindow) return;
   if (!lockEnforcementActive) return;
 
@@ -368,7 +384,7 @@ chrome.windows.onCreated.addListener(async (win) => {
   if (store.lockState !== STATES.LOCKED) return;
   if (win.id === store.lockWindowId) return;
 
-  // Close the intruding window
+  // Close the intruding window (it has no session data to lose)
   try { await chrome.windows.remove(win.id); }
   catch (_) { /* ok */ }
 
@@ -381,25 +397,42 @@ chrome.windows.onCreated.addListener(async (win) => {
 
 // --- Lock window removed ---
 chrome.windows.onRemoved.addListener(async (windowId) => {
+  // Ignore if we're in the middle of creating a lock window
+  if (isCreatingLockWindow) return;
+  // Mutex: prevent concurrent recreation calls
+  if (recreatingLockWindow) return;
+
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
   if (windowId !== store.lockWindowId) return;
 
-  // Lock window was closed — recreate after a tiny debounce
+  // Lock window was closed by user — clear stored ID and recreate
+  recreatingLockWindow = true;
   await setStore({ lockWindowId: null });
+
+  // Small debounce to let Chrome settle, then create exactly one new window
   setTimeout(async () => {
-    const current = await getStore();
-    if (current.lockState === STATES.LOCKED && current.lockWindowId == null) {
-      await createLockWindow();
+    try {
+      const current = await getStore();
+      if (current.lockState === STATES.LOCKED && current.lockWindowId == null) {
+        await createLockWindow();
+      }
+    } finally {
+      recreatingLockWindow = false;
     }
-  }, 150);
+  }, 400);
 });
 
 // --- New tab created ---
 chrome.tabs.onCreated.addListener(async (tab) => {
+  // Never remove tabs that belong to a window we are currently creating
+  if (isCreatingLockWindow) return;
   if (!lockEnforcementActive) return;
+
   const store = await getStore();
   if (store.lockState !== STATES.LOCKED) return;
+
+  // Allow tabs in the lock window itself
   if (tab.windowId === store.lockWindowId) return;
 
   // Remove tabs opened outside the lock window
@@ -625,20 +658,39 @@ async function handleMessage(msg, sender) {
 
 // ============================================================
 //  Self-check on service-worker wake-up
-//  (handles restart while browser is locked)
+//  (handles SW restart while browser is locked)
+//
+//  IMPORTANT: On a real browser startup, chrome.runtime.onStartup also fires.
+//  The startupHandled flag ensures only ONE path runs lock logic.
+//  This IIFE only acts when the SW restarts mid-session (not on cold start).
 // ============================================================
 (async () => {
   try {
+    // Give onStartup a tick to claim startupHandled first if this is a cold start
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     const store = await getStore();
+
     if (store.lockState === STATES.LOCKED) {
       lockEnforcementActive = true;
 
-      // Ensure a lock window exists
-      if (store.lockWindowId != null) {
-        try { await chrome.windows.get(store.lockWindowId); }
-        catch (_) { await createLockWindow(); }
-      } else {
-        await createLockWindow();
+      // If onStartup already handled the lock window creation, skip
+      if (!startupHandled) {
+        startupHandled = true;
+
+        // Check if a lock window already exists and is alive
+        let lockWindowAlive = false;
+        if (store.lockWindowId != null) {
+          try {
+            await chrome.windows.get(store.lockWindowId);
+            lockWindowAlive = true;
+          } catch (_) { /* window is gone */ }
+        }
+
+        if (!lockWindowAlive) {
+          await setStore({ lockWindowId: null });
+          await createLockWindow();
+        }
       }
 
       // Re-minimise any protected windows that may have been un-minimised
@@ -646,8 +698,9 @@ async function handleMessage(msg, sender) {
         try { await chrome.windows.update(id, { state: 'minimized' }); }
         catch (_) { /* ok */ }
       }
+
     } else if (store.lockState === STATES.UNLOCKED) {
       await setupInactivityAlarm();
     }
-  } catch (_) { /* first run — state doesn't exist yet */ }
+  } catch (_) { /* first run — storage empty, nothing to do */ }
 })();
